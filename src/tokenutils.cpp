@@ -125,6 +125,7 @@ namespace TUtils
                 }
             }
         }
+        return NULL;
     }
 
     TContext* tokenutils::getContext()

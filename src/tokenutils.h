@@ -128,6 +128,16 @@ namespace TUtils
             }
             return NULL;
         }
+	TCall* getCall(std::string name)
+	{
+            std::list<TCall*>::iterator callIt;
+            for(callIt=callList.begin();callIt!=callList.end();callIt++)
+            {
+                if ((*callIt)->name==name)
+                    return *callIt;
+            }
+            return NULL;
+        }
 
         TContext()
         {
@@ -220,5 +230,5 @@ namespace TUtils
 
         static TCall* getCall(const Token *tok, int* shift);
     };
-};
+}
 #endif // __tokenutils__
