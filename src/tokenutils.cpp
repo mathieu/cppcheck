@@ -81,9 +81,10 @@ namespace TUtils
         return NULL;
     }
 
-    const Token * tokenutils::createContext(const Token *tok, TContext* parent, TContext* current)
+    const Token * tokenutils::createContext(const Token *tok, TContext* parent, TContext* current, bool first)
     {
-        for (const Token *t = tok; t; t = t->next())
+        const Token* t=tok;
+        while(t)
         {
             if (Token::Match(t, "{"))
             {
@@ -91,12 +92,15 @@ namespace TUtils
                 //std::cout << t->str() << std::endl;
                 TContext* cont = new TContext();
                 cont->beginsAt = t->linenr();
-                t=createContext(t->next(),current,cont);
+                t=createContext(t->next(),current,cont,false);
+                t=t->next();
                 //return;
             } else if (Token::Match(t, "}"))
             {
                 //Context closed
                 current->endsAt = t->linenr();
+                current->parent=parent;
+                current->isFirstContext=first;
                 parent->contextList.push_back(current);
                 //current->Print();
                 return t;
@@ -123,6 +127,8 @@ namespace TUtils
                     current->callList.push_back(call);
                     t = t->tokAt(shift);
                 }
+                if (!decl && !assign && !call)
+                    t=t->next();
             }
         }
         return NULL;
@@ -139,7 +145,7 @@ namespace TUtils
         context = new TContext();
         const Token *tok = tokenizer->tokens();
         const Token* last_tok;
-        last_tok=createContext(tok, context,context);
+        last_tok=createContext(tok, context,context,true);
     }
 
     tokenutils::~tokenutils()
@@ -208,6 +214,7 @@ namespace TUtils
     TDeclaration* tokenutils::getDeclaration(const Token *tok, int* shift)
     {
         TDeclaration* res = NULL;
+        //std::cout << tok->str() << std::endl;
         if (Token::Match(tok, "%type% %var% ;|[")) {
             res = new TDeclaration();
             res->name = tok->tokAt(1)->str();
@@ -337,6 +344,7 @@ namespace TUtils
                     TPar* par=new TPar();
                     par->name=t->str();
                     pList.push_back(par);
+                    //t = t->next();
                 }
                 else if (indent==1 && (Token::Match(t, "* %any% ,") || Token::Match(t, "* %any% )")))
                 {
@@ -344,6 +352,8 @@ namespace TUtils
                     par->name=t->strAt(1);
                     par->isContent=true;
                     pList.push_back(par);
+                    //t = t->next();
+                    t = t->next();
                 }
                 else if (indent==1 && (Token::Match(t, "& %any% ,") || Token::Match(t, "& %any% )")))
                 {
@@ -351,8 +361,10 @@ namespace TUtils
                     par->name=t->strAt(1);
                     par->isPointer=true;
                     pList.push_back(par);
+                    //t = t->next();
+                    t = t->next();
                 }
-                if (Token::Match(t, " ) "))
+                else if (Token::Match(t, " ) "))
                 {
                     indent--;
                     //t->printOut();

@@ -137,6 +137,8 @@ namespace TUtils
     {
         int beginsAt;
         int endsAt;
+        TContext* parent;
+        bool isFirstContext;
         std::list<TDeclaration*> declarationList;
         std::list<TAssignement*> assignementList;
         std::list<TCall*> callList;
@@ -149,6 +151,10 @@ namespace TUtils
             {
                 if ((*declIt)->name==name)
                     return *declIt;
+            }
+            if (!isFirstContext)
+            {
+                return parent->getDeclaration(name);
             }
             return NULL;
         }
@@ -163,10 +169,24 @@ namespace TUtils
             return NULL;
         }
 
+        std::list<TCall*> getAllCalls(std::string name)
+	{
+            std::list<TCall*> list;
+            std::list<TCall*>::iterator callIt;
+            for(callIt=callList.begin();callIt!=callList.end();callIt++)
+            {
+                if ((*callIt)->name==name)
+                    list.push_back(*callIt);
+            }
+            return list;
+        }
+
         TContext()
         {
             beginsAt = -1;
             endsAt = -1;
+            parent=NULL;
+            isFirstContext=true;
         }
 
         ~TContext()
@@ -236,7 +256,7 @@ namespace TUtils
 
         TDeclaration* getDeclData(std::string varName);
 
-        const Token *createContext(const Token *tok, TContext* parent,TContext* current);
+        const Token *createContext(const Token *tok, TContext* parent,TContext* current,bool first);
 
         TContext* getContext();
 
