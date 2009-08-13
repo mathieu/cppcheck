@@ -8,17 +8,41 @@
 #include <sstream>
 namespace TUtils
 {
+    struct TPar
+    {
+        std::string name;
+        bool isPointer;
+        bool isContent;
+        bool isArray;
+        TPar()
+        {
+            isPointer=false;
+            isContent=false;
+            isArray=false;
+        }
+        void Print()
+        {
+            printf("[%s P%d C%d A%d] ",name.c_str(),isPointer,isContent,isArray);
+        }
+    };
     struct TCall
     {
         std::string name;
         int line;
+        std::list<TPar*> parametersList;
         TCall()
         {
             line=-1;
         }
         void Print()
         {
-            printf("Call to %s at line %d\n",name.c_str(),line);
+            printf("Call to %s at line %d ",name.c_str(),line);
+            std::list<TPar*>::iterator parIt;
+            for (parIt = parametersList.begin(); parIt != parametersList.end(); parIt++)
+            {
+                (*parIt)->Print();
+            }
+            printf("\n");
         }
     };
     struct TAssignement
@@ -128,7 +152,7 @@ namespace TUtils
             }
             return NULL;
         }
-	TCall* getCall(std::string name)
+	TCall* getFirstCall(std::string name)
 	{
             std::list<TCall*>::iterator callIt;
             for(callIt=callList.begin();callIt!=callList.end();callIt++)

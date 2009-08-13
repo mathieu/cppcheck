@@ -299,6 +299,7 @@ namespace TUtils
         int indent = 0;
         int line_nr = 0;
         std::string name;
+        std::list<TUtils::TPar*> pList;
         int ls = 0;
 
         if (Token::Match(tok, "%any% ("))
@@ -322,9 +323,34 @@ namespace TUtils
                         res = new TCall();
                         res->line = line_nr;
                         res->name = name;
+                        std::list<TPar*>::iterator parIt;
+                        for (parIt = pList.begin(); parIt != pList.end(); parIt++)
+                        {
+                            res->parametersList.push_back(*parIt);
+                        }
                         *shift = ls;
                         break;
                     }
+                }
+                else if (indent==1 && (Token::Match(t, "%any% ,") || Token::Match(t, "%any% )")))
+                {
+                    TPar* par=new TPar();
+                    par->name=t->str();
+                    pList.push_back(par);
+                }
+                else if (indent==1 && (Token::Match(t, "* %any% ,") || Token::Match(t, "* %any% )")))
+                {
+                    TPar* par=new TPar();
+                    par->name=t->strAt(1);
+                    par->isContent=true;
+                    pList.push_back(par);
+                }
+                else if (indent==1 && (Token::Match(t, "& %any% ,") || Token::Match(t, "& %any% )")))
+                {
+                    TPar* par=new TPar();
+                    par->name=t->strAt(1);
+                    par->isPointer=true;
+                    pList.push_back(par);
                 }
                 if (Token::Match(t, " ) "))
                 {
@@ -336,6 +362,11 @@ namespace TUtils
                         res = new TCall();
                         res->line = line_nr;
                         res->name = name;
+                        std::list<TPar*>::iterator parIt;
+                        for (parIt = pList.begin(); parIt != pList.end(); parIt++)
+                        {
+                            res->parametersList.push_back(*parIt);
+                        }
                         *shift = ls;
                         break;
                     }
