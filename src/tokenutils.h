@@ -1,3 +1,21 @@
+/*
+ * Cppcheck - A tool for static C/C++ code analysis
+ * Copyright (C) 2007-2009 Daniel Marjamäki and Cppcheck team.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/
+ */
+
 #ifndef __tokenutils__
 #define __tokenutils__
 #include "token.h"
@@ -8,286 +26,288 @@
 #include <sstream>
 namespace TUtils
 {
-    struct TPar
+struct TPar
+{
+    std::string name;
+    bool isPointer;
+    bool isContent;
+    bool isArray;
+    TPar()
     {
-        std::string name;
-        bool isPointer;
-        bool isContent;
-        bool isArray;
-        TPar()
-        {
-            isPointer=false;
-            isContent=false;
-            isArray=false;
-        }
-        void Print()
-        {
-            printf("[%s P%d C%d A%d] ",name.c_str(),isPointer,isContent,isArray);
-        }
-    };
-    struct TCall
+        isPointer = false;
+        isContent = false;
+        isArray = false;
+    }
+    void Print()
     {
-        std::string name;
+        printf("[%s P%d C%d A%d] ", name.c_str(), isPointer, isContent, isArray);
+    }
+};
+struct TCall
+{
+    std::string name;
+    const Token *token;
+    int line;
+    std::list<TPar*> parametersList;
+    TCall()
+    {
+        line = -1;
+        token = NULL;
+    }
+    void Print()
+    {
+        printf("Call to %s at line %d ", name.c_str(), line);
+        std::list<TPar*>::iterator parIt;
+        for (parIt = parametersList.begin(); parIt != parametersList.end(); parIt++)
+        {
+            (*parIt)->Print();
+        }
+        printf("\n");
+    }
+};
+struct TAssignement
+{
+    std::string left;
+    std::string right;
+    int line;
+    bool leftIsAddress;
+    bool leftIsContent;
+    bool rightIsAddress;
+    bool rightIsContent;
+
+    TAssignement()
+    {
+        left = "";
+        right = "";
+        leftIsAddress = false;
+        leftIsContent = false;
+        rightIsAddress = false;
+        rightIsContent = false;
+        line = -1;
+    }
+
+    void Print()
+    {
+        printf("Assignement at line %d. Left [%s] A %d C %d Right [%s] A %d C %d\n",
+               line,
+               left.c_str(),
+               leftIsAddress,
+               leftIsContent,
+               right.c_str(),
+               rightIsAddress,
+               rightIsContent
+              );
+    }
+};
+
+struct TDeclaration
+{
+    std::string name;
+    std::string type;
+    const Token *token;
+    bool isPointer;
+    bool isSigned;
+    bool isUnsigned;
+    bool isShort;
+    bool isLong;
+    bool isLongLong;
+    bool isStatic;
+    bool isConst;
+    bool isArray;
+    TDeclaration* alias;
+    int line;
+
+    TDeclaration()
+    {
+        std::string name = "";
+        std::string type = "";
         int line;
-        std::list<TPar*> parametersList;
-        TCall()
-        {
-            line=-1;
-        }
-        void Print()
-        {
-            printf("Call to %s at line %d ",name.c_str(),line);
-            std::list<TPar*>::iterator parIt;
-            for (parIt = parametersList.begin(); parIt != parametersList.end(); parIt++)
-            {
-                (*parIt)->Print();
-            }
-            printf("\n");
-        }
-    };
-    struct TAssignement
+        isPointer = false;
+        isSigned = false;
+        isUnsigned = false;
+        isShort = false;
+        isLong = false;
+        isLongLong = false;
+        isStatic = false;
+        isConst = false;
+        isArray = false;
+        line = 0;
+        token = NULL;
+        alias = NULL;
+    }
+
+    TDeclaration* getRealDeclaration()
     {
-        std::string left;
-        std::string right;
-        int line;
-        bool leftIsAddress;
-        bool leftIsContent;
-        bool rightIsAddress;
-        bool rightIsContent;
-
-        TAssignement()
+        TDeclaration* decl = alias;
+        while (decl->alias)
         {
-            left = "";
-            right = "";
-            leftIsAddress = false;
-            leftIsContent = false;
-            rightIsAddress = false;
-            rightIsContent = false;
-            line = -1;
+            decl = decl->alias;
         }
-
-        void Print()
-        {
-            printf("Assignement at line %d. Left [%s] A %d C %d Right [%s] A %d C %d\n",
-                    line,
-                    left.c_str(),
-                    leftIsAddress,
-                    leftIsContent,
-                    right.c_str(),
-                    rightIsAddress,
-                    rightIsContent
-                    );
-        }
-    };
-
-    struct TDeclaration
+        return decl;
+    }
+    void Print()
     {
-        std::string name;
-        std::string type;
-        const Token *token;
-        bool isPointer;
-        bool isSigned;
-        bool isUnsigned;
-        bool isShort;
-        bool isLong;
-        bool isLongLong;
-        bool isStatic;
-        bool isConst;
-        bool isArray;
-        TDeclaration* alias;
-        int line;
+        std::string str = "";
+        if (alias)
+            str = alias->name;
+        printf("Var %s (type %s) declared at %d: P %d SIGNED %d UNSIGNED %d SHORT %d LONG %d LL %d STATIC %d CONST %d ARRAY %d ALIAS %s\n",
+               name.c_str(),
+               type.c_str(),
+               line,
+               isPointer,
+               isSigned,
+               isUnsigned,
+               isShort,
+               isLong,
+               isLongLong,
+               isStatic,
+               isConst,
+               isArray,
+               str.c_str());
 
-        TDeclaration()
-        {
-            std::string name = "";
-            std::string type = "";
-            int line;
-            isPointer = false;
-            isSigned = false;
-            isUnsigned = false;
-            isShort = false;
-            isLong = false;
-            isLongLong = false;
-            isStatic = false;
-            isConst = false;
-            isArray = false;
-            line = 0;
-            token = NULL;
-            alias=NULL;
-        }
+    }
+};
 
-        TDeclaration* getRealDeclaration()
-        {
-            TDeclaration* decl=alias;
-            while (decl->alias)
-            {
-                decl=decl->alias;
-            }
-            return decl;
-        }
-        void Print()
-        {
-            std::string str="";
-            if (alias)
-                str=alias->name;
-            printf("Var %s (type %s) declared at %d: P %d SIGNED %d UNSIGNED %d SHORT %d LONG %d LL %d STATIC %d CONST %d ARRAY %d ALIAS %s\n",
-                    name.c_str(),
-                    type.c_str(),
-                    line,
-                    isPointer,
-                    isSigned,
-                    isUnsigned,
-                    isShort,
-                    isLong,
-                    isLongLong,
-                    isStatic,
-                    isConst,
-                    isArray,
-                    str.c_str());
+struct TContext
+{
+    int beginsAt;
+    int endsAt;
+    TContext* parent;
+    bool isFirstContext;
+    std::list<TDeclaration*> declarationList;
+    std::list<TAssignement*> assignementList;
+    std::list<TCall*> callList;
+    std::list<TContext*> contextList;
 
-        }
-    };
-
-    struct TContext
+    TDeclaration * getDeclaration(std::string name)
     {
-        int beginsAt;
-        int endsAt;
-        TContext* parent;
-        bool isFirstContext;
-        std::list<TDeclaration*> declarationList;
-        std::list<TAssignement*> assignementList;
-        std::list<TCall*> callList;
-        std::list<TContext*> contextList;
-
-        TDeclaration * getDeclaration(std::string name)
+        std::list<TDeclaration*>::iterator declIt;
+        for (declIt = declarationList.begin(); declIt != declarationList.end(); declIt++)
         {
-            std::list<TDeclaration*>::iterator declIt;
-            for (declIt = declarationList.begin(); declIt != declarationList.end(); declIt++)
-            {
-                if ((*declIt)->name==name)
-                    return *declIt;
-            }
-            if (!isFirstContext)
-            {
-                return parent->getDeclaration(name);
-            }
-            return NULL;
+            if ((*declIt)->name == name)
+                return *declIt;
         }
-	TCall* getFirstCall(std::string name)
-	{
-            std::list<TCall*>::iterator callIt;
-            for(callIt=callList.begin();callIt!=callList.end();callIt++)
-            {
-                if ((*callIt)->name==name)
-                    return *callIt;
-            }
-            return NULL;
-        }
-
-        std::list<TCall*> getAllCalls(std::string name)
-	{
-            std::list<TCall*> list;
-            std::list<TCall*>::iterator callIt;
-            for(callIt=callList.begin();callIt!=callList.end();callIt++)
-            {
-                if ((*callIt)->name==name)
-                    list.push_back(*callIt);
-            }
-            return list;
-        }
-
-        TContext()
+        if (!isFirstContext)
         {
-            beginsAt = -1;
-            endsAt = -1;
-            parent=NULL;
-            isFirstContext=true;
+            return parent->getDeclaration(name);
         }
-
-        ~TContext()
-        {
-            std::list<TDeclaration*>::iterator it;
-            for (it = declarationList.begin(); it != declarationList.end(); it++)
-            {
-                delete *it;
-            }
-            declarationList.clear();
-            std::list<TContext*>::iterator it2;
-            for (it2 = contextList.begin(); it2 != contextList.end(); it2++)
-            {
-                delete *it2;
-            }
-            contextList.clear();
-        }
-
-        void Print()
-        {
-            printf("Context from line %d to line %d {\n",beginsAt,endsAt);
-            std::list<TDeclaration*>::iterator declIt;
-            printf("Declarations{\n");
-            for (declIt = declarationList.begin(); declIt != declarationList.end(); declIt++)
-            {
-                (*declIt)->Print();
-            }
-            printf("}\n");
-            printf("Assignements{\n");
-            std::list<TAssignement*>::iterator assIt;
-            for(assIt=assignementList.begin();assIt!=assignementList.end();assIt++)
-            {
-                (*assIt)->Print();
-            }
-            printf("}\n");
-
-            printf("Calls{\n");
-            std::list<TCall*>::iterator callIt;
-            for(callIt=callList.begin();callIt!=callList.end();callIt++)
-            {
-                (*callIt)->Print();
-            }
-            printf("}\n");
-
-            printf("Sub Context{\n");
-            std::list<TContext*>::iterator scIt;
-            for (scIt = contextList.begin(); scIt != contextList.end(); scIt++)
-            {
-                (*scIt)->Print();
-            }
-            printf("}\n");
-            printf("}\n");
-        }
-    };
-
-    void checkSingleContext(TContext* context);
-
-    class tokenutils
+        return NULL;
+    }
+    TCall* getFirstCall(std::string name)
     {
-    private:
-        std::list<TDeclaration*> _list;
-        bool first;
-        TContext* context;
-        static const std::string keywords[];
-        static const std::string operators[];
-    public:
+        std::list<TCall*>::iterator callIt;
+        for (callIt = callList.begin();callIt != callList.end();callIt++)
+        {
+            if ((*callIt)->name == name)
+                return *callIt;
+        }
+        return NULL;
+    }
 
-        TDeclaration* getDeclData(std::string varName);
+    std::list<TCall*> getAllCalls(std::string name)
+    {
+        std::list<TCall*> list;
+        std::list<TCall*>::iterator callIt;
+        for (callIt = callList.begin();callIt != callList.end();callIt++)
+        {
+            if ((*callIt)->name == name)
+                list.push_back(*callIt);
+        }
+        return list;
+    }
 
-        const Token *createContext(const Token *tok, TContext* parent,TContext* current,bool first);
+    TContext()
+    {
+        beginsAt = -1;
+        endsAt = -1;
+        parent = NULL;
+        isFirstContext = true;
+    }
 
-        TContext* getContext();
+    ~TContext()
+    {
+        std::list<TDeclaration*>::iterator it;
+        for (it = declarationList.begin(); it != declarationList.end(); it++)
+        {
+            delete *it;
+        }
+        declarationList.clear();
+        std::list<TContext*>::iterator it2;
+        for (it2 = contextList.begin(); it2 != contextList.end(); it2++)
+        {
+            delete *it2;
+        }
+        contextList.clear();
+    }
 
-        tokenutils(const Tokenizer *tokenizer);
+    void Print()
+    {
+        printf("Context from line %d to line %d {\n", beginsAt, endsAt);
+        std::list<TDeclaration*>::iterator declIt;
+        printf("Declarations{\n");
+        for (declIt = declarationList.begin(); declIt != declarationList.end(); declIt++)
+        {
+            (*declIt)->Print();
+        }
+        printf("}\n");
+        printf("Assignements{\n");
+        std::list<TAssignement*>::iterator assIt;
+        for (assIt = assignementList.begin();assIt != assignementList.end();assIt++)
+        {
+            (*assIt)->Print();
+        }
+        printf("}\n");
 
-        ~tokenutils();
+        printf("Calls{\n");
+        std::list<TCall*>::iterator callIt;
+        for (callIt = callList.begin();callIt != callList.end();callIt++)
+        {
+            (*callIt)->Print();
+        }
+        printf("}\n");
 
-        static bool isLanguageKeyword(const Token *tok);
+        printf("Sub Context{\n");
+        std::list<TContext*>::iterator scIt;
+        for (scIt = contextList.begin(); scIt != contextList.end(); scIt++)
+        {
+            (*scIt)->Print();
+        }
+        printf("}\n");
+        printf("}\n");
+    }
+};
 
-        static bool isLanguageOperator(const Token *tok);
+void checkSingleContext(TContext* context);
 
-        static TAssignement* getAssignement(const Token *tok, int* shift);
+class tokenutils
+{
+private:
+    std::list<TDeclaration*> _list;
+    bool first;
+    TContext* context;
+    static const std::string keywords[];
+    static const std::string operators[];
+public:
 
-        static TDeclaration* getDeclaration(const Token *tok, int* shift);
+    TDeclaration* getDeclData(std::string varName);
 
-        static TCall* getCall(const Token *tok, int* shift);
-    };
+    const Token *createContext(const Token *tok, TContext* parent, TContext* current, bool first);
+
+    TContext* getContext();
+
+    tokenutils(const Tokenizer *tokenizer);
+
+    ~tokenutils();
+
+    static bool isLanguageKeyword(const Token *tok);
+
+    static bool isLanguageOperator(const Token *tok);
+
+    static TAssignement* getAssignement(const Token *tok, int* shift);
+
+    static TDeclaration* getDeclaration(const Token *tok, int* shift);
+
+    static TCall* getCall(const Token *tok, int* shift);
+};
 }
 #endif // __tokenutils__
