@@ -94,6 +94,7 @@ namespace TUtils
         bool isStatic;
         bool isConst;
         bool isArray;
+        TDeclaration* alias;
         int line;
 
         TDeclaration()
@@ -112,11 +113,24 @@ namespace TUtils
             isArray = false;
             line = 0;
             token = NULL;
+            alias=NULL;
         }
 
+        TDeclaration* getRealDeclaration()
+        {
+            TDeclaration* decl=alias;
+            while (decl->alias)
+            {
+                decl=decl->alias;
+            }
+            return decl;
+        }
         void Print()
         {
-            printf("Var %s (type %s) declared at %d: P %d SIGNED %d UNSIGNED %d SHORT %d LONG %d LL %d STATIC %d CONST %d ARRAY %d\n",
+            std::string str="";
+            if (alias)
+                str=alias->name;
+            printf("Var %s (type %s) declared at %d: P %d SIGNED %d UNSIGNED %d SHORT %d LONG %d LL %d STATIC %d CONST %d ARRAY %d ALIAS %s\n",
                     name.c_str(),
                     type.c_str(),
                     line,
@@ -128,7 +142,8 @@ namespace TUtils
                     isLongLong,
                     isStatic,
                     isConst,
-                    isArray);
+                    isArray,
+                    str.c_str());
 
         }
     };

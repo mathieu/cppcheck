@@ -117,6 +117,12 @@ namespace TUtils
                 TAssignement* assign = getAssignement(t, &shift);
                 if (assign)
                 {
+                    TDeclaration* rdecl=current->getDeclaration(assign->right);
+                    TDeclaration* ldecl=current->getDeclaration(assign->left);
+                    if (ldecl && rdecl)
+                    {
+                        ldecl->alias=rdecl;
+                    }
                     current->assignementList.push_back(assign);
                     //assign->Print();
                     t=t->tokAt(shift);
