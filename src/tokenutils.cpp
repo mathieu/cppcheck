@@ -17,6 +17,7 @@
  */
 
 #include "tokenutils.h"
+#include <typeinfo>
 namespace TUtils
 {
 
@@ -99,25 +100,66 @@ TDeclaration* tokenutils::getDeclData(std::string varName)
     }
     return NULL;
 }
-
+TSwitchCase* __case_default(const Token* t)
+{
+    TSwitchCase* c;
+    c=new TSwitchCase();
+    c->beginsAt=t->linenr();
+    if (Token::Match(t, "default"))
+        c->isDefault=true;
+    else
+        c->isDefault=false;
+    return c;
+}
 const Token * tokenutils::createContext(const Token *tok, TContext* parent, TContext* current, bool first)
 {
     const Token* t = tok;
+    TSwitchCase* c=NULL;
     while (t)
     {
         if (Token::Match(t, "{"))
         {
 
-            //std::cout << t->str() << std::endl;
-            TContext* cont = new TContext();
-            cont->beginsAt = t->linenr();
-            t = createContext(t->next(), current, cont, false);
+            const Token* lt=t->previous();
+            //Go back until match ';'
+            while (!Token::Match(lt,";") && lt->previous())
+                lt=lt->previous();
+            lt=lt->next();
+            //switch context
+            if (Token::Match(lt, "switch ("))
+            {
+                TSwitchContext* cont=new TSwitchContext();
+                cont->beginsAt = t->linenr();
+                
+                t = createContext(t->next(), current, cont, false);
+                //cont->Print();
+            }
+            else
+            {
+                TContext* cont = new TContext();
+                cont->beginsAt = t->linenr();
+                t = createContext(t->next(), current, cont, false);
+                //cont->Print();
+            }
             t = t->next();
             //return;
         }
         else if (Token::Match(t, "}"))
         {
             //Context closed
+            if (current->ObjectId==TSwitchContextId)
+            {
+                //Close the last case/default
+                if (c!=NULL)
+                {
+                    c->endsAt=t->linenr()-1;
+                    c->hasBreak=false;
+                    ((TSwitchContext*)current)->caseList.push_back(c);
+                }
+                TSwitchContext* sc=(TSwitchContext*)current;
+                std::cout << sc->isSwitch << std::endl;
+            }
+            
             current->endsAt = t->linenr();
             current->parent = parent;
             current->isFirstContext = first;
@@ -155,7 +197,52 @@ const Token * tokenutils::createContext(const Token *tok, TContext* parent, TCon
                 t = t->tokAt(shift);
             }
             if (!decl && !assign && !call)
-                t = t->next();
+            {
+                //If the current context is a switch
+                if (current->ObjectId==TSwitchContextId)
+                {
+                    if (Token::Match(t, "case|default"))
+                    {
+                        t->printOut("Case/Default");
+                        //begins case
+                        if (c==NULL)
+                        {
+                            c=__case_default(t);
+                        }
+                        //ends case
+                        else
+                        {
+                            c->endsAt=t->linenr()-1;
+                            c->hasBreak=false;
+                            ((TSwitchContext*)current)->caseList.push_back(c);
+                            //... and build another case
+                            c=__case_default(t);
+                        }
+                        t=t->next();
+                    }
+                    else if (Token::Match(t, "break ;"))
+                    {
+                        if (c!=NULL)
+                        {
+                            c->endsAt=t->linenr();
+                            c->hasBreak=true;
+                            ((TSwitchContext*)current)->caseList.push_back(c);
+                            c=NULL;
+                        }
+                        else
+                        {
+                            //Don't know !
+                        }
+                        t=t->next()->next();
+                    }
+                    else
+                    {
+                        t=t->next();
+                    }
+                }
+                else
+                    t = t->next();
+            }
         }
     }
     return NULL;

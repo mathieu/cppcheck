@@ -26,7 +26,25 @@
 #include <sstream>
 namespace TUtils
 {
-struct TPar
+static const std::string TObjectId="TObject";
+static const std::string TParId="TPar";
+static const std::string TCallId="TCall";
+static const std::string TContextId="TContext";
+static const std::string TSwitchContextId="TSwitchContext";
+static const std::string TSwitchCaseId="TSwitchCase";
+struct TObject
+{
+    std::string ObjectId;
+    TObject()
+    {
+        ObjectId=TObjectId;
+    }
+    std::string toString()
+    {
+        return ObjectId;
+    }
+};
+struct TPar : public TObject
 {
     std::string name;
     bool isPointer;
@@ -37,13 +55,14 @@ struct TPar
         isPointer = false;
         isContent = false;
         isArray = false;
+        ObjectId = TParId;
     }
     void Print()
     {
         printf("[%s P%d C%d A%d] ", name.c_str(), isPointer, isContent, isArray);
     }
 };
-struct TCall
+struct TCall : public TObject
 {
     std::string name;
     const Token *token;
@@ -53,6 +72,7 @@ struct TCall
     {
         line = -1;
         token = NULL;
+        ObjectId = TCallId;
     }
     void Print()
     {
@@ -168,7 +188,7 @@ struct TDeclaration
     }
 };
 
-struct TContext
+struct TContext : public TObject
 {
     int beginsAt;
     int endsAt;
@@ -222,6 +242,7 @@ struct TContext
         endsAt = -1;
         parent = NULL;
         isFirstContext = true;
+        ObjectId=TContextId;
     }
 
     ~TContext()
@@ -240,7 +261,7 @@ struct TContext
         contextList.clear();
     }
 
-    void Print()
+    virtual void Print()
     {
         printf("Context from line %d to line %d {\n", beginsAt, endsAt);
         std::list<TDeclaration*>::iterator declIt;
@@ -276,7 +297,48 @@ struct TContext
         printf("}\n");
     }
 };
-
+struct TSwitchCase : public TObject
+{
+    int beginsAt;
+    int endsAt;
+    bool hasBreak;
+    bool isDefault;
+    TSwitchCase()
+    {
+        beginsAt=-1;
+        endsAt=-1;
+        hasBreak=false;
+        isDefault=false;
+        ObjectId=TSwitchCaseId;
+    }
+    void Print()
+    {
+        printf("case B %d E %d HB %d ID %d\n",beginsAt,endsAt,hasBreak,isDefault);
+    }
+};
+struct TSwitchContext : public TContext
+{
+    bool isSwitch;
+    std::list<TSwitchCase*> caseList;
+    TSwitchContext()
+    {
+        TContext();
+        isSwitch=true;
+        ObjectId=TSwitchContextId;
+    }
+    void Print()
+    {
+        printf ("Switch ");
+        TContext::Print();
+        printf("Switch cases{\n");
+        std::list<TSwitchCase*>::iterator cIt;
+        for (cIt = caseList.begin();cIt != caseList.end();cIt++)
+        {
+            (*cIt)->Print();
+        }
+        printf("}");
+    }
+};
 void checkSingleContext(TContext* context);
 
 class tokenutils
