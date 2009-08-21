@@ -156,8 +156,8 @@ const Token * tokenutils::createContext(const Token *tok, TContext* parent, TCon
                     c->hasBreak=false;
                     ((TSwitchContext*)current)->caseList.push_back(c);
                 }
-                TSwitchContext* sc=(TSwitchContext*)current;
-                std::cout << sc->isSwitch << std::endl;
+                //TSwitchContext* sc=(TSwitchContext*)current;
+                //std::cout << sc->isSwitch << std::endl;
             }
             
             current->endsAt = t->linenr();
@@ -203,7 +203,7 @@ const Token * tokenutils::createContext(const Token *tok, TContext* parent, TCon
                 {
                     if (Token::Match(t, "case|default"))
                     {
-                        t->printOut("Case/Default");
+                        //t->printOut("Case/Default");
                         //begins case
                         if (c==NULL)
                         {

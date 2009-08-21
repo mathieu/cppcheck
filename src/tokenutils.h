@@ -24,6 +24,15 @@
 #include <iostream>
 #include <stdio.h>
 #include <sstream>
+
+#define GET_ALL_BY_NAME(T, LIST, PARAM, NAME) \
+    std::list<T*>::iterator declIt; \
+    std::list<T*>* outList=new std::list<T*>(); \
+    for (declIt = LIST.begin(); declIt != LIST.end(); declIt++) \
+    { \
+        if ((*declIt)->PARAM == NAME) \
+            outList->push_back(*declIt); \
+    }
 namespace TUtils
 {
 static const std::string TObjectId="TObject";
@@ -187,7 +196,6 @@ struct TDeclaration
 
     }
 };
-
 struct TContext : public TObject
 {
     int beginsAt;
@@ -199,6 +207,12 @@ struct TContext : public TObject
     std::list<TCall*> callList;
     std::list<TContext*> contextList;
 
+    std::list<TAssignement*>* getAllAssignementsWithLeft(std::string name)
+    {
+        GET_ALL_BY_NAME(TAssignement,assignementList,left,name)
+        return outList;
+    }
+    
     TDeclaration * getDeclaration(std::string name)
     {
         std::list<TDeclaration*>::iterator declIt;
@@ -325,6 +339,16 @@ struct TSwitchContext : public TContext
         TContext();
         isSwitch=true;
         ObjectId=TSwitchContextId;
+    }
+    TSwitchCase* getCaseThatContainsLine(int line)
+    {
+        std::list<TSwitchCase*>::iterator cIt;
+        for (cIt = caseList.begin();cIt != caseList.end();cIt++)
+        {
+            if (line>=(*cIt)->beginsAt && line<=(*cIt)->endsAt)
+                return *cIt;
+        }
+        return NULL;
     }
     void Print()
     {
