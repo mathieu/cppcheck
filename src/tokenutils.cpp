@@ -103,34 +103,34 @@ TDeclaration* tokenutils::getDeclData(std::string varName)
 TSwitchCase* __case_default(const Token* t)
 {
     TSwitchCase* c;
-    c=new TSwitchCase();
-    c->beginsAt=t->linenr();
+    c = new TSwitchCase();
+    c->beginsAt = t->linenr();
     if (Token::Match(t, "default"))
-        c->isDefault=true;
+        c->isDefault = true;
     else
-        c->isDefault=false;
+        c->isDefault = false;
     return c;
 }
 const Token * tokenutils::createContext(const Token *tok, TContext* parent, TContext* current, bool first)
 {
     const Token* t = tok;
-    TSwitchCase* c=NULL;
+    TSwitchCase* c = NULL;
     while (t)
     {
         if (Token::Match(t, "{"))
         {
 
-            const Token* lt=t->previous();
+            const Token* lt = t->previous();
             //Go back until match ';'
-            while (!Token::Match(lt,";") && lt->previous())
-                lt=lt->previous();
-            lt=lt->next();
+            while (!Token::Match(lt, ";") && lt->previous())
+                lt = lt->previous();
+            lt = lt->next();
             //switch context
             if (Token::Match(lt, "switch ("))
             {
-                TSwitchContext* cont=new TSwitchContext();
+                TSwitchContext* cont = new TSwitchContext();
                 cont->beginsAt = t->linenr();
-                
+
                 t = createContext(t->next(), current, cont, false);
                 //cont->Print();
             }
@@ -147,19 +147,19 @@ const Token * tokenutils::createContext(const Token *tok, TContext* parent, TCon
         else if (Token::Match(t, "}"))
         {
             //Context closed
-            if (current->ObjectId==TSwitchContextId)
+            if (current->ObjectId == TSwitchContextId)
             {
                 //Close the last case/default
-                if (c!=NULL)
+                if (c != NULL)
                 {
-                    c->endsAt=t->linenr()-1;
-                    c->hasBreak=false;
+                    c->endsAt = t->linenr() - 1;
+                    c->hasBreak = false;
                     ((TSwitchContext*)current)->caseList.push_back(c);
                 }
                 //TSwitchContext* sc=(TSwitchContext*)current;
                 //std::cout << sc->isSwitch << std::endl;
             }
-            
+
             current->endsAt = t->linenr();
             current->parent = parent;
             current->isFirstContext = first;
@@ -199,45 +199,45 @@ const Token * tokenutils::createContext(const Token *tok, TContext* parent, TCon
             if (!decl && !assign && !call)
             {
                 //If the current context is a switch
-                if (current->ObjectId==TSwitchContextId)
+                if (current->ObjectId == TSwitchContextId)
                 {
                     if (Token::Match(t, "case|default"))
                     {
                         //t->printOut("Case/Default");
                         //begins case
-                        if (c==NULL)
+                        if (c == NULL)
                         {
-                            c=__case_default(t);
+                            c = __case_default(t);
                         }
                         //ends case
                         else
                         {
-                            c->endsAt=t->linenr()-1;
-                            c->hasBreak=false;
+                            c->endsAt = t->linenr() - 1;
+                            c->hasBreak = false;
                             ((TSwitchContext*)current)->caseList.push_back(c);
                             //... and build another case
-                            c=__case_default(t);
+                            c = __case_default(t);
                         }
-                        t=t->next();
+                        t = t->next();
                     }
                     else if (Token::Match(t, "break ;"))
                     {
-                        if (c!=NULL)
+                        if (c != NULL)
                         {
-                            c->endsAt=t->linenr();
-                            c->hasBreak=true;
+                            c->endsAt = t->linenr();
+                            c->hasBreak = true;
                             ((TSwitchContext*)current)->caseList.push_back(c);
-                            c=NULL;
+                            c = NULL;
                         }
                         else
                         {
                             //Don't know !
                         }
-                        t=t->next()->next();
+                        t = t->next()->next();
                     }
                     else
                     {
-                        t=t->next();
+                        t = t->next();
                     }
                 }
                 else
@@ -279,6 +279,7 @@ TAssignement* tokenutils::getAssignement(const Token *tok, int* shift)
     {
         res = new TAssignement();
         res->line = tok->linenr();
+        res->token = tok;
         std::ostringstream oss;
         const Token *t = tok->previous();
         //Backward

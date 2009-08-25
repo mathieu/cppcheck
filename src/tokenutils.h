@@ -18,12 +18,12 @@
 
 #ifndef __tokenutils__
 #define __tokenutils__
-#include "token.h"
-#include "tokenize.h"
 #include <list>
 #include <iostream>
 #include <stdio.h>
 #include <sstream>
+#include "token.h"
+#include "tokenize.h"
 
 #define GET_ALL_BY_NAME(T, LIST, PARAM, NAME) \
     std::list<T*>::iterator declIt; \
@@ -33,20 +33,24 @@
         if ((*declIt)->PARAM == NAME) \
             outList->push_back(*declIt); \
     }
+#define APPLY_TO_LIST(T, LIST,IT) \
+    std::list<T>::iterator IT; \
+    for (IT = LIST.begin(); IT != LIST.end(); IT++)
+
 namespace TUtils
 {
-static const std::string TObjectId="TObject";
-static const std::string TParId="TPar";
-static const std::string TCallId="TCall";
-static const std::string TContextId="TContext";
-static const std::string TSwitchContextId="TSwitchContext";
-static const std::string TSwitchCaseId="TSwitchCase";
+static const std::string TObjectId = "TObject";
+static const std::string TParId = "TPar";
+static const std::string TCallId = "TCall";
+static const std::string TContextId = "TContext";
+static const std::string TSwitchContextId = "TSwitchContext";
+static const std::string TSwitchCaseId = "TSwitchCase";
 struct TObject
 {
     std::string ObjectId;
     TObject()
     {
-        ObjectId=TObjectId;
+        ObjectId = TObjectId;
     }
     std::string toString()
     {
@@ -103,6 +107,7 @@ struct TAssignement
     bool leftIsContent;
     bool rightIsAddress;
     bool rightIsContent;
+    const Token *token;
 
     TAssignement()
     {
@@ -209,10 +214,19 @@ struct TContext : public TObject
 
     std::list<TAssignement*>* getAllAssignementsWithLeft(std::string name)
     {
-        GET_ALL_BY_NAME(TAssignement,assignementList,left,name)
+        GET_ALL_BY_NAME(TAssignement, assignementList, left, name)
         return outList;
     }
-    
+    std::list<TAssignement*>* getAllAssignementsWithin(int begins,int ends)
+    {
+        std::list<TAssignement*>* res=new std::list<TAssignement*>();
+        APPLY_TO_LIST(TAssignement*,assignementList,assIt)
+        {
+            if (((*assIt)->line > begins) && ((*assIt)->line <= ends))
+                res->push_back((*assIt));
+        }
+        return res;
+    }
     TDeclaration * getDeclaration(std::string name)
     {
         std::list<TDeclaration*>::iterator declIt;
@@ -256,7 +270,7 @@ struct TContext : public TObject
         endsAt = -1;
         parent = NULL;
         isFirstContext = true;
-        ObjectId=TContextId;
+        ObjectId = TContextId;
     }
 
     ~TContext()
@@ -319,15 +333,15 @@ struct TSwitchCase : public TObject
     bool isDefault;
     TSwitchCase()
     {
-        beginsAt=-1;
-        endsAt=-1;
-        hasBreak=false;
-        isDefault=false;
-        ObjectId=TSwitchCaseId;
+        beginsAt = -1;
+        endsAt = -1;
+        hasBreak = false;
+        isDefault = false;
+        ObjectId = TSwitchCaseId;
     }
     void Print()
     {
-        printf("case B %d E %d HB %d ID %d\n",beginsAt,endsAt,hasBreak,isDefault);
+        printf("case B %d E %d HB %d ID %d\n", beginsAt, endsAt, hasBreak, isDefault);
     }
 };
 struct TSwitchContext : public TContext
@@ -337,22 +351,22 @@ struct TSwitchContext : public TContext
     TSwitchContext()
     {
         TContext();
-        isSwitch=true;
-        ObjectId=TSwitchContextId;
+        isSwitch = true;
+        ObjectId = TSwitchContextId;
     }
     TSwitchCase* getCaseThatContainsLine(int line)
     {
         std::list<TSwitchCase*>::iterator cIt;
         for (cIt = caseList.begin();cIt != caseList.end();cIt++)
         {
-            if (line>=(*cIt)->beginsAt && line<=(*cIt)->endsAt)
+            if (line >= (*cIt)->beginsAt && line <= (*cIt)->endsAt)
                 return *cIt;
         }
         return NULL;
     }
     void Print()
     {
-        printf ("Switch ");
+        printf("Switch ");
         TContext::Print();
         printf("Switch cases{\n");
         std::list<TSwitchCase*>::iterator cIt;
