@@ -25,14 +25,8 @@ void TokenizeCode(std::istream &code, const unsigned int FileIndex=0);
 // Return size.
 int SizeOfType(const char type[]);
 
-// Simplify tokenlist
-// -----------------------------
-void SimplifyTokenList();
-
-
 // Deallocate lists..
 void DeallocateTokens();
-
 
 // Helper functions for handling the tokens list..
 const TOKEN *findtoken(const TOKEN *tok1, const char *tokenstr[]);
