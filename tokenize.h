@@ -22,9 +22,6 @@ void Tokenize(const char FileName[]);
 
 void TokenizeCode(std::istream &code, const unsigned int FileIndex=0);
 
-// Return size.
-int SizeOfType(const char type[]);
-
 // Deallocate lists..
 void DeallocateTokens();
 

@@ -189,26 +189,6 @@ static void combine_2tokens(TOKEN *tok, const char str1[], const char str2[])
 
 
 
-
-//---------------------------------------------------------------------------
-// SizeOfType - gives the size of a type
-//---------------------------------------------------------------------------
-
-std::map<std::string, unsigned int> TypeSize;
-
-int SizeOfType(const char type[])
-{
-    if (!type)
-        return 0;
-
-    return TypeSize[type];
-}
-//---------------------------------------------------------------------------
-
-
-
-
-
 //---------------------------------------------------------------------------
 // DeleteNextToken. Unlink and delete next token.
 //---------------------------------------------------------------------------
