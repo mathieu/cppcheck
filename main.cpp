@@ -21,11 +21,7 @@
 #include "tokenize.h"   // <- Tokenizer
 #include "CommonCheck.h"
 
-#include "CheckMemoryLeak.h"
-#include "CheckBufferOverrun.h"
-#include "CheckClass.h"
 #include "CheckHeaders.h"
-#include "CheckOther.h"
 
 #include <algorithm>
 #include <iostream>
