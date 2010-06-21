@@ -198,7 +198,7 @@ unsigned int Tokenizer::sizeOfType(const Token *type) const
         if (type->str() == "double")
             return sizeof(long double);
         else if (type->str() == "long")
-            return sizeof(long long);
+            return sizeof(long);
     }
 
     return it->second;
