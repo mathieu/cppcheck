@@ -30,7 +30,7 @@ gui/*.qm
 doxyoutput/
 # qmake generated
 src/Makefile
-
+build
 *.sdf
 ipch
 *.opensdf
