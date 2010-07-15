@@ -2,6 +2,8 @@
 
 SET(CHECKTEST_HDRS
   testsuite.h
+  tinyxml/tinystr.h
+  tinyxml/tinyxml.h
 )
 
 SET(CHECKTEST_SRCS
@@ -30,6 +32,10 @@ SET(CHECKTEST_SRCS
   testincompletestatement.cpp
   testunusedvar.cpp
   testmathlib.cpp
+  tinyxml/tinystr.cpp
+  tinyxml/tinyxml.cpp
+  tinyxml/tinyxmlerror.cpp
+  tinyxml/tinyxmlparser.cpp
 )
 
 aux_source_directory(${CPPCHECK_SOURCE_DIR}/lib LIB_SRCS)
