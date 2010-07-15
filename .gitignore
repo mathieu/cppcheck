@@ -34,3 +34,5 @@ build
 *.sdf
 ipch
 *.opensdf
+Cppcheck.xcodeproj/*.mode1v3
+Cppcheck.xcodeproj/*.pbxuser
