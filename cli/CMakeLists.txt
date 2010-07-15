@@ -1,5 +1,7 @@
 # Minimal CMake build file to build cppcheck command line executable
 
+project(cppcheck)
+
 SET(CHECKCLI_HDRS
   cppcheckexecutor.h
   threadexecutor.h
@@ -47,6 +49,6 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 endif (CMAKE_COMPILER_IS_GNUCXX)
 
 include_directories (${CPPCHECK_SOURCE_DIR}/lib)
-ADD_EXECUTABLE(../cppcheck ${CHECKCLI_SRCS} ${CHECKCLI_HDRS} ${LIB_SRCS})
-TARGET_LINK_LIBRARIES(../cppcheck ${CHECK_LIBS})
+ADD_EXECUTABLE(cppcheck ${CHECKCLI_SRCS} ${CHECKCLI_HDRS} ${LIB_SRCS})
+TARGET_LINK_LIBRARIES(cppcheck ${CHECK_LIBS})
 
