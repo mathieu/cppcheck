@@ -675,6 +675,7 @@ void MainWindow::OpenHtmlHelpContents()
     QString exeFolder = QDir::currentPath();
     exeFolder += file;
     exeFolder = QDir::toNativeSeparators(exeFolder);
-    HtmlHelp(NULL, exeFolder.utf16(), HH_DISPLAY_TOPIC, NULL);
+    //HtmlHelp(NULL, exeFolder.utf16(), HH_DISPLAY_TOPIC, NULL);
+    HtmlHelp(NULL, exeFolder.toStdString().c_str(), HH_DISPLAY_TOPIC, NULL);
 #endif // WIN32
 }
