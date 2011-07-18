@@ -1,7 +1,7 @@
 TEMPLATE = app
 TARGET = cppcheck
 DEPENDPATH += .
-INCLUDEPATH += . ../lib
+INCLUDEPATH += . ../lib /opt/local/include
 OBJECTS_DIR = temp
 CONFIG += warn_on
 CONFIG -= qt app_bundle
