@@ -31,7 +31,7 @@
 #include "timer.h"
 
 #ifdef HAVE_RULES
-#define PCRE_STATIC
+//#define PCRE_STATIC
 #include <pcre.h>
 #endif
 
