@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,56 +19,51 @@
 #ifndef XML_REPORT_H
 #define XML_REPORT_H
 
-#include <QObject>
 #include <QString>
-#include <QStringList>
-#include <QFile>
-#include <QXmlStreamWriter>
+#include <QList>
 #include "report.h"
+#include "erroritem.h"
+
+class QObject;
 
 /// @addtogroup GUI
 /// @{
 
 
 /**
-* @brief XML file report.
-* This report outputs XML-formatted report. The XML format must match command
-* line version's XML output.
+* @brief Base class for XML report classes.
 */
 class XmlReport : public Report
 {
 public:
     XmlReport(const QString &filename, QObject * parent = 0);
-    virtual ~XmlReport();
 
     /**
-    * @brief Create the report (file).
-    * @return true if succeeded, false if file could not be created.
-    */
-    virtual bool Create();
+     * @brief Read contents of the report file.
+     */
+    virtual QList<ErrorItem> Read() = 0;
 
     /**
-    * @brief Write report header.
-    */
-    virtual void WriteHeader();
+     * @brief Quote the message.
+     * @param message Message to quote.
+     * @return quoted message.
+     */
+    static QString quoteMessage(const QString &message);
 
     /**
-    * @brief Write report footer.
-    */
-    virtual void WriteFooter();
+     * @brief Unquote the message.
+     * @param message Message to quote.
+     * @return quoted message.
+     */
+    static QString unquoteMessage(const QString &message);
 
     /**
-    * @brief Write error to report.
-    */
-    virtual void WriteError(const QStringList &files, const QStringList &lines,
-                            const QString &id, const QString &severity, const QString &msg);
-
-private:
-
-    /**
-    * @brief XML stream writer for writing the report in XML format.
-    */
-    QXmlStreamWriter mXmlWriter;
+     * @brief Get the XML report format version from the file.
+     * @param filename Filename of the report file.
+     * @return XML report format version or 0 if error happened.
+     */
+    static int determineVersion(const QString &filename);
 };
 /// @}
+
 #endif // XML_REPORT_H

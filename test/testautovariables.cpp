@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,10 +37,20 @@ private:
 
     void check(const char code[])
     {
+        // Clear the error buffer..
+        errout.str("");
+
+        Settings settings;
+        settings.debugwarnings = true;
+
         // Tokenize..
-        Tokenizer tokenizer;
+        Tokenizer tokenizer(&settings, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
+
+        CheckAutoVariables checkAutoVariables(&tokenizer, &settings, this);
+        checkAutoVariables.runChecks(&tokenizer, &settings, this);
+
         tokenizer.simplifyTokenList();
 
         // Assign variable ids
@@ -49,46 +59,58 @@ private:
         // Fill function list
         tokenizer.fillFunctionList();
 
-        // Clear the error buffer..
-        errout.str("");
-
         // Check auto variables
-        Settings settings;
-        CheckAutoVariables checkAutoVariables(&tokenizer, &settings, this);
         checkAutoVariables.autoVariables();
         checkAutoVariables.returnPointerToLocalArray();
-        checkAutoVariables.returnReference();
         checkAutoVariables.returncstr();
     }
 
     void run()
     {
-        TEST_CASE(testautovar);
-        TEST_CASE(testautovar_array);
-        TEST_CASE(testautovar_return);
+        TEST_CASE(testautovar1);
+        TEST_CASE(testautovar2);
+        TEST_CASE(testautovar_array1);
+        TEST_CASE(testautovar_array2);
+        TEST_CASE(testautovar_return1);
+        TEST_CASE(testautovar_return2);
         TEST_CASE(testautovar_extern);
         TEST_CASE(testinvaliddealloc);
+        TEST_CASE(testassign1);  // Ticket #1819
+        TEST_CASE(testassign2);  // Ticket #2765
 
         TEST_CASE(returnLocalVariable1);
         TEST_CASE(returnLocalVariable2);
 
         // return reference..
-        TEST_CASE(returnReference);
+        TEST_CASE(returnReference1);
+        TEST_CASE(returnReference2);
+        TEST_CASE(returnReference3);
 
         // return c_str()..
-        TEST_CASE(returncstr);
+        TEST_CASE(returncstr1);
+        TEST_CASE(returncstr2);
+
+        // global namespace
+        TEST_CASE(testglobalnamespace);
     }
 
 
 
-    void testautovar()
+    void testautovar1()
     {
         check("void func1(int **res)\n"
               "{\n"
               "    int num = 2;\n"
               "    *res = &num;\n"
               "}");
-        ASSERT_EQUALS("[test.cpp:3]: (error) Wrong assignment of an auto-variable to an effective parameter of a function\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:3]: (error) Assigning address of local auto-variable to a function parameter.\n", errout.str());
+
+        check("void func1(int **res)\n"
+              "{\n"
+              "    int num = 2;\n"
+              "    res = &num;\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
 
         check("void func1(int **res)\n"
               "{\n"
@@ -98,23 +120,83 @@ private:
         ASSERT_EQUALS("", errout.str());
     }
 
-    void testautovar_array()
+    void testautovar2()
+    {
+        check("class Fred {\n"
+              "    void func1(int **res);\n"
+              "}\n"
+              "void Fred::func1(int **res)\n"
+              "{\n"
+              "    int num = 2;\n"
+              "    *res = &num;\n"
+              "}");
+        ASSERT_EQUALS("[test.cpp:6]: (error) Assigning address of local auto-variable to a function parameter.\n", errout.str());
+
+        check("class Fred {\n"
+              "    void func1(int **res);\n"
+              "}\n"
+              "void Fred::func1(int **res)\n"
+              "{\n"
+              "    int num = 2;\n"
+              "    res = &num;\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
+
+        check("class Fred {\n"
+              "    void func1(int **res);\n"
+              "}\n"
+              "void Fred::func1(int **res)\n"
+              "{\n"
+              "    int num = 2;\n"
+              "    foo.res = &num;\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void testautovar_array1()
     {
         check("void func1(int* arr[2])\n"
               "{\n"
               "    int num=2;"
               "    arr[0]=&num;\n"
               "}");
-        ASSERT_EQUALS("[test.cpp:3]: (error) Wrong assignment of an auto-variable to an effective parameter of a function\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:3]: (error) Assigning address of local auto-variable to a function parameter.\n", errout.str());
     }
 
-    void testautovar_return()
+    void testautovar_array2()
+    {
+        check("class Fred {\n"
+              "    void func1(int* arr[2]);\n"
+              "}\n"
+              "void Fred::func1(int* arr[2])\n"
+              "{\n"
+              "    int num=2;"
+              "    arr[0]=&num;\n"
+              "}");
+        ASSERT_EQUALS("[test.cpp:6]: (error) Assigning address of local auto-variable to a function parameter.\n", errout.str());
+    }
+
+    void testautovar_return1()
     {
         check("int* func1()\n"
               "{\n"
               "    int num=2;"
-              "return &num;}");
+              "    return &num;"
+              "}");
         ASSERT_EQUALS("[test.cpp:3]: (error) Return of the address of an auto-variable\n", errout.str());
+    }
+
+    void testautovar_return2()
+    {
+        check("class Fred {\n"
+              "    int* func1()\n"
+              "}\n"
+              "int* Fred::func1()\n"
+              "{\n"
+              "    int num=2;"
+              "    return &num;"
+              "}");
+        ASSERT_EQUALS("[test.cpp:6]: (error) Return of the address of an auto-variable\n", errout.str());
     }
 
     void testautovar_extern()
@@ -149,6 +231,24 @@ private:
         ASSERT_EQUALS(std::string(""), errout.str());
     }
 
+    void testassign1() // Ticket #1819
+    {
+        check("void f(EventPtr *eventP, ActionPtr **actionsP) {\n"
+              "    EventPtr event = *eventP;\n"
+              "    *actionsP = &event->actions;\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void testassign2() // Ticket #2765
+    {
+        check("static void function(unsigned long **datap) {\n"
+              "    struct my_s *mr = global_structure_pointer;\n"
+              "    *datap = &mr->value;\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
     void returnLocalVariable1()
     {
         check("char *foo()\n"
@@ -157,6 +257,16 @@ private:
               "    return str;\n"
               "}\n");
         ASSERT_EQUALS("[test.cpp:4]: (error) Returning pointer to local array variable\n", errout.str());
+
+        check("class Fred {\n"
+              "    char *foo();\n"
+              "};\n"
+              "char *Fred::foo()\n"
+              "{\n"
+              "    char str[100] = {0};\n"
+              "    return str;\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:7]: (error) Returning pointer to local array variable\n", errout.str());
     }
 
     void returnLocalVariable2()
@@ -167,9 +277,19 @@ private:
               "    return str;\n"
               "}\n");
         ASSERT_EQUALS("", errout.str());
+
+        check("class Fred {\n"
+              "    std::string foo();\n"
+              "};\n"
+              "std::string Fred::foo()\n"
+              "{\n"
+              "    char str[100] = {0};\n"
+              "    return str;\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
     }
 
-    void returnReference()
+    void returnReference1()
     {
         check("std::string &foo()\n"
               "{\n"
@@ -204,9 +324,86 @@ private:
         ASSERT_EQUALS("[test.cpp:8]: (error) Returning reference to temporary\n", errout.str());
     }
 
-    void returncstr()
+    void returnReference2()
+    {
+        check("class Fred {\n"
+              "    std::string &foo();\n"
+              "}\n"
+              "std::string &Fred::foo()\n"
+              "{\n"
+              "    std::string s;\n"
+              "    return s;\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:7]: (error) Returning reference to auto variable\n", errout.str());
+
+        check("class Fred {\n"
+              "    std::vector<int> &foo();\n"
+              "};\n"
+              "std::vector<int> &Fred::foo()\n"
+              "{\n"
+              "    std::vector<int> v;\n"
+              "    return v;\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:7]: (error) Returning reference to auto variable\n", errout.str());
+
+        check("class Fred {\n"
+              "    std::vector<int> &foo();\n"
+              "};\n"
+              "std::vector<int> &Fred::foo()\n"
+              "{\n"
+              "    static std::vector<int> v;\n"
+              "    return v;\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
+
+        check("class Fred {\n"
+              "    std::string &f();\n"
+              "};\n"
+              "std::string hello()\n"
+              "{\n"
+              "     return \"hello\";\n"
+              "}\n"
+              "std::string &Fred::f()\n"
+              "{\n"
+              "    return hello();\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:10]: (error) Returning reference to temporary\n", errout.str());
+
+        check("class Fred {\n"
+              "    std::string hello();\n"
+              "    std::string &f();\n"
+              "};\n"
+              "std::string Fred::hello()\n"
+              "{\n"
+              "     return \"hello\";\n"
+              "}\n"
+              "std::string &Fred::f()\n"
+              "{\n"
+              "    return hello();\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:11]: (error) Returning reference to temporary\n", errout.str());
+    }
+
+    void returnReference3()
+    {
+        check("double & f(double & rd) {\n"
+              "    double ret = getValue();\n"
+              "    rd = ret;\n"
+              "    return rd;\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void returncstr1()
     {
         check("const char *foo()\n"
+              "{\n"
+              "    std::string s;\n"
+              "    return s.c_str();\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:4]: (error) Returning pointer to auto variable\n", errout.str());
+
+        check("const char *Foo::f()\n"
               "{\n"
               "    std::string s;\n"
               "    return s.c_str();\n"
@@ -223,6 +420,59 @@ private:
               "    return hello().c_str();\n"
               "}\n");
         ASSERT_EQUALS("[test.cpp:8]: (error) Returning pointer to temporary\n", errout.str());
+    }
+
+    void returncstr2()
+    {
+        check("class Fred {\n"
+              "    const char *foo();\n"
+              "};\n"
+              "const char *Fred::foo()\n"
+              "{\n"
+              "    std::string s;\n"
+              "    return s.c_str();\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:7]: (error) Returning pointer to auto variable\n", errout.str());
+
+        check("class Fred {\n"
+              "    const char *foo();\n"
+              "};\n"
+              "const char *Foo::f()\n"
+              "{\n"
+              "    std::string s;\n"
+              "    return s.c_str();\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:7]: (error) Returning pointer to auto variable\n", errout.str());
+
+        check("class Fred {\n"
+              "    std::string hello();\n"
+              "    const char *f();\n"
+              "};\n"
+              "std::string Fred::hello()\n"
+              "{\n"
+              "     return \"hello\";\n"
+              "}\n"
+              "const char *Fred::f()\n"
+              "{\n"
+              "    return hello().c_str();\n"
+              "}\n");
+        ASSERT_EQUALS("[test.cpp:11]: (error) Returning pointer to temporary\n", errout.str());
+    }
+
+
+    void testglobalnamespace()
+    {
+        check("class SharedPtrHolder\n"
+              "{\n"
+              "   ::std::tr1::shared_ptr<int> pNum;\n"
+              "public:\n"
+              "   void SetNum(const ::std::tr1::shared_ptr<int> & apNum)\n"
+              "   {\n"
+              "      pNum = apNum;\n"
+              "   }\n"
+              "}");
+
+        ASSERT_EQUALS("", errout.str());
     }
 
 };

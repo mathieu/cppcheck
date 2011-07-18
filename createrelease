@@ -1,11 +1,15 @@
 #!/bin/bash
-# A script for tagging and releasing.
 #
-# A tag will be created with the given name.
+# A script for creating release packages. The release packages are create in the home directory.
 #
-# Archive files are created in user's home directory.
+# Make sure "cppcheck --errorlist" works. For example with:
+# make test
+# cppcheck --errorlist > errlist.xml
+# xmllint --noout errlist.xml
+# cppcheck --xml-version=2 --errorlist > errlist.xml
+# xmllint --noout errlist.xml
 #
-# Before running this script, remember to update version number in:
+# Update version numbers in:
 # - lib/cppcheck.cpp
 # - cli/main.cpp
 # - cli/cppcheck.rc
@@ -16,12 +20,16 @@
 # wget http://josefsson.org/git2cl/git2cl
 # chmod 744 git2cl
 # ./git2cl > Changelog
-# git commit -a -m "Changelog: Updated for release"
+# git commit -a -m "1.43: Updated Changelog"
 #
 # Update the Makefile:
-# g++ -o dmake tools/dmake.cpp lib/filelister*.cpp
+# make dmake
 # ./dmake --release
-# git commit -a -m "Makefile: Set release mode"
+# git commit -a -m "1.43: Updated Makefile"
+#
+# Tag:
+# git tag 1.43
+# git push --tags
 #
 # Create release:
 # ./createrelease 1.43
@@ -30,13 +38,16 @@
 # ./dmake
 # git commit -a -m "Makefile: Set debug mode"
 #
-# Generate the manual.pdf and version.txt
+# Generate the manual.pdf, manual.html and version.txt
 # make
 # ./cppcheck --version > version.txt
-# docbook2pdf man/manual.pdf
+# docbook2pdf man/manual.docbook
+# xsltproc -o manual.html /usr/share/xml/docbook/stylesheet/nwalsh/xhtml/docbook.xsl man/manual.docbook
 #
-# Upload manual.pdf and version.txt...
+# Upload manual.pdf , manual.html and version.txt...
 # sftp hyd_danmar,cppcheck@web.sourceforge.net
+#
+# save "cppcheck --doc" output on wiki
 
 # Tag to use
 tag=$1
@@ -44,12 +55,11 @@ tag=$1
 # Name of release
 releasename=cppcheck-$tag
 
-# Tagging..
-git tag $tag
-
 # Create archives..
 git archive --format=tar --prefix=$releasename/ $tag | gzip > ~/$releasename.tar.gz
 git archive --format=tar --prefix=$releasename/ $tag | bzip2 > ~/$releasename.tar.bz2
 git archive --format=zip -9 --prefix=$releasename/ $tag > ~/$releasename.zip
+
+# scp cppcheck-1.49.zip hyd_danmar,cppcheck@frs.sourceforge.net:/home/frs/project/c/cp/cppcheck/cppcheck/1.49/
 
 

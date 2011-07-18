@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,35 +32,34 @@
 class CheckUnusedFunctions: public Check
 {
 public:
-    CheckUnusedFunctions(ErrorLogger *errorLogger = 0);
-    ~CheckUnusedFunctions();
+    /** @brief This constructor is used when registering the CheckUnusedFunctions */
+    CheckUnusedFunctions() : Check(myName())
+    { }
 
-    /**
-     * Errors found by this class are forwarded to the given
-     * errorlogger.
-     * @param errorLogger The errorlogger to be used.
-     */
-    void setErrorLogger(ErrorLogger *errorLogger);
+    /** @brief This constructor is used when running checks. */
+    CheckUnusedFunctions(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
+        : Check(myName(), tokenizer, settings, errorLogger)
+    { }
 
     // Parse current tokens and determine..
     // * Check what functions are used
     // * What functions are declared
     void parseTokens(const Tokenizer &tokenizer);
 
-
-    void check();
+    void check(ErrorLogger * const errorLogger);
 
 private:
 
-    void getErrorMessages()
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings)
     {
-        unusedFunctionError(0);
+        CheckUnusedFunctions c(0, settings, errorLogger);
+        c.unusedFunctionError(errorLogger, "", "funcName");
     }
 
     /**
      * Dummy implementation, just to provide error for --errorlist
      */
-    void unusedFunctionError(const Token *tok);
+    void unusedFunctionError(ErrorLogger * const errorLogger, const std::string &filename, const std::string &funcname);
 
     /**
      * Dummy implementation, just to provide error for --errorlist
@@ -70,7 +69,7 @@ private:
 
     }
 
-    std::string name() const
+    std::string myName() const
     {
         return "Unused functions";
     }
@@ -79,9 +78,6 @@ private:
     {
         return "Check for functions that are never called\n";
     }
-
-    ErrorLogger *_errorLogger;
-
 
     class FunctionUsage
     {

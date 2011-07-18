@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,16 @@
 
 
 #include <QWidget>
-#include <QProgressBar>
 #include "../lib/errorlogger.h"
-#include "resultstree.h"
 #include "common.h"
 #include "report.h"
 #include "ui_resultsview.h"
+
+class ErrorItem;
+class ApplicationList;
+class QModelIndex;
+class QSettings;
+class CheckStatistics;
 
 /// @addtogroup GUI
 /// @{
@@ -92,9 +96,15 @@ public:
     /**
     * @brief Inform the view that checking has started
     *
-    * At the moment this only displays the progressbar
+    * @param count Count of files to be checked.
     */
-    void CheckingStarted();
+    void CheckingStarted(int count);
+
+    /**
+    * @brief Inform the view that checking finished.
+    *
+    */
+    void CheckingFinished();
 
     /**
     * @brief Do we have visible results to show?
@@ -113,8 +123,9 @@ public:
     /**
     * @brief Save View's settings
     *
+    * @param settings program settings.
     */
-    void SaveSettings();
+    void SaveSettings(QSettings *settings);
 
     /**
     * @brief Translate this view
@@ -123,6 +134,24 @@ public:
     void Translate();
 
     void DisableProgressbar();
+
+    /**
+    * @brief Read errors from report XML file.
+    * @param filename Report file to read.
+    *
+    */
+    void ReadErrorsXml(const QString &filename);
+
+    /**
+    * @brief Return checking statistics.
+    * @param Pointer to checking statistics.
+    *
+    */
+    CheckStatistics *GetStatistics() const
+    {
+        return mStatistics;
+    }
+
 signals:
 
     /**
@@ -131,6 +160,12 @@ signals:
     */
     void GotResults();
 
+    /**
+    * @brief Signal that results have been hidden or shown
+    *
+    * @param hidden true if there are some hidden results, or false if there are not
+    */
+    void ResultsHidden(bool hidden);
 
 public slots:
 
@@ -138,26 +173,15 @@ public slots:
     * @brief Slot for updating the checking progress
     *
     * @param value Current progress value
-    * @param max Maximum progress value
     */
-    void Progress(int value, int max);
+    void Progress(int value);
 
     /**
     * @brief Slot for new error to be displayed
     *
-    * @param file filename
-    * @param severity error severity
-    * @param message error message
-    * @param files list of files affected by the error
-    * @param lines list of file line numers affected by the error
-    * @param id error id
+    * @param item Error data
     */
-    void Error(const QString &file,
-               const QString &severity,
-               const QString &message,
-               const QStringList &files,
-               const QVariantList &lines,
-               const QString &id);
+    void Error(const ErrorItem &item);
 
     /**
     * @brief Collapse all results in the result list.
@@ -169,6 +193,23 @@ public slots:
     */
     void ExpandAllResults();
 
+    /**
+    * @brief Filters the results in the result list.
+    */
+    void FilterResults(const QString& filter);
+
+    /**
+    * @brief Show hidden results in the result list.
+    */
+    void ShowHiddenResults();
+
+    /**
+    * @brief Update detailed message when selected item is changed.
+    *
+    * @param index Position of new selected item.
+    */
+    void UpdateDetails(const QModelIndex &index);
+
 protected:
     /**
     * @brief Have any errors been found
@@ -176,11 +217,14 @@ protected:
     bool mErrorsFound;
 
     /**
-    * @brief Should we show a "No errors found dialog" everytime no errors were found?
+    * @brief Should we show a "No errors found dialog" every time no errors were found?
     */
     bool mShowNoErrorsMessage;
 
     Ui::ResultsView mUI;
+
+    CheckStatistics *mStatistics;
+
 
 private:
 };

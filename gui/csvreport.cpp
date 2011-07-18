@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QObject>
+#include <QString>
+#include <QDir>
 #include <QFile>
 #include <QTextStream>
+#include "report.h"
 #include "csvreport.h"
 
 CsvReport::CsvReport(const QString &filename, QObject * parent) :
@@ -51,19 +55,17 @@ void CsvReport::WriteFooter()
     // No footer for CSV report
 }
 
-void CsvReport::WriteError(const QStringList &files, const QStringList &lines,
-                           const QString &id, const QString &severity, const QString &msg)
+void CsvReport::WriteError(const ErrorItem &error)
 {
-    Q_UNUSED(id);
-
     /*
     Error as CSV line
     gui/test.cpp,23,error,Mismatching allocation and deallocation: k
     */
 
     QString line;
-    line += QString("%1,%2,").arg(files[files.size() - 1]).arg(lines[lines.size() - 1]);
-    line += QString("%1,%2").arg(severity).arg(msg);
+    const QString file = QDir::toNativeSeparators(error.files[error.files.size() - 1]);
+    line += QString("%1,%2,").arg(file).arg(error.lines[error.lines.size() - 1]);
+    line += QString("%1,%2").arg(GuiSeverity::toString(error.severity)).arg(error.summary);
 
     mTxtWriter << line << endl;
 }

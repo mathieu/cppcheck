@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -112,6 +112,17 @@ public:
      **/
     virtual bool parseCondition(const Token &tok, std::list<ExecutionPath *> &checks);
 
+    /**
+     * Parse loop body
+     * @param tok the first token in the loop body (the token after the {)
+     * @param checks The execution paths
+     */
+    virtual void parseLoopBody(const Token *tok, std::list<ExecutionPath *> &checks) const
+    {
+        (void)tok;
+        (void)checks;
+    }
+
     /** going out of scope - all execution paths end */
     virtual void end(const std::list<ExecutionPath *> & /*checks*/, const Token * /*tok*/) const
     { }
@@ -120,9 +131,12 @@ public:
     {
         return bool(varId == e.varId && is_equal(&e));
     }
+
+    static void checkScope(const Token *tok, std::list<ExecutionPath *> &checks);
 };
 
 
+void checkExecutionPaths(const Token *tok, ExecutionPath *c);
 void checkExecutionPaths(const Token *tok, ExecutionPath *c);
 
 

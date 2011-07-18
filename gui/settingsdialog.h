@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,17 +21,13 @@
 #define SETTINGSDIALOG_H
 
 #include <QDialog>
-#include <QLineEdit>
-#include <QComboBox>
-#include <QSettings>
-#include <QCheckBox>
-#include <QVBoxLayout>
-#include <QPushButton>
-#include "applicationlist.h"
-
-#include <QListWidget>
 #include <QKeyEvent>
 #include "ui_settings.h"
+
+class QSettings;
+class QWidget;
+class ApplicationList;
+class TranslationHandler;
 
 /// @addtogroup GUI
 /// @{
@@ -44,8 +40,8 @@ class SettingsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    SettingsDialog(QSettings *programSettings,
-                   ApplicationList *list,
+    SettingsDialog(ApplicationList *list,
+                   TranslationHandler *translator,
                    QWidget *parent = 0);
     virtual ~SettingsDialog();
 
@@ -53,7 +49,7 @@ public:
     * @brief Save all values to QSettings
     *
     */
-    void SaveCheckboxValues();
+    void SaveSettingValues();
 
     /**
     * @brief Get checkbox value for mShowFullPath
@@ -101,32 +97,58 @@ protected slots:
     * @brief Slot for deleting an application from the list
     *
     */
-    void DeleteApplication();
+    void RemoveApplication();
 
     /**
     * @brief Slot for modifying an application in the list
     *
     */
-    void ModifyApplication();
+    void EditApplication();
 
     /**
     * @brief Slot for making the selected application as the default (first)
     *
     */
     void DefaultApplication();
+
+    /**
+    * @brief Slot for adding new include path
+    *
+    */
+    void AddIncludePath();
+
+    /**
+    * @brief Slot for removing an include path.
+    *
+    */
+    void RemoveIncludePath();
+
+    /**
+    * @brief Slot for editing an include path.
+    *
+    */
+    void EditIncludePath();
+
 protected:
+
+    /**
+    * @brief Add new include path to the list.
+    * @param path Path to add.
+    *
+    */
+    void AddIncludePath(const QString &path);
 
     /**
     * @brief Clear all applications from the list and re insert them from mTempApplications
     *
     */
-    void PopulateListWidget();
+    void PopulateApplicationList();
 
     /**
-        * @brief Load saved values
-        * Loads dialog size and column widths.
-        *
-        */
+    * @brief Load saved values
+    * Loads dialog size and column widths.
+    *
+    */
     void SaveSettings();
 
     /**
@@ -137,13 +159,13 @@ protected:
     void LoadSettings();
 
     /**
-    * @brief Save a single checkboxes value
-    *
-    * @param box checkbox to save
-    * @param name name for QSettings to store the value
-    */
-    void SaveCheckboxValue(QCheckBox *box, const QString &name);
-
+     * @brief Save a single checkboxes value
+     *
+     * @param settings Pointer to Settings.
+     * @param box checkbox to save
+     * @param name name for QSettings to store the value
+     */
+    void SaveCheckboxValue(QSettings *settings, QCheckBox *box, const QString &name);
 
     /**
     * @brief Convert bool to Qt::CheckState
@@ -151,7 +173,7 @@ protected:
     * @param yes value to convert
     * @return value converted to Qt::CheckState
     */
-    Qt::CheckState BoolToCheckState(bool yes);
+    Qt::CheckState BoolToCheckState(bool yes) const;
 
     /**
     * @brief Converts Qt::CheckState to bool
@@ -159,14 +181,17 @@ protected:
     * @param state Qt::CheckState to convert
     * @return converted value
     */
-    bool CheckStateToBool(Qt::CheckState state);
-
+    bool CheckStateToBool(Qt::CheckState state) const;
 
     /**
-    * @brief Settings
-    *
+    * @brief Populate the include paths-list.
     */
-    QSettings *mSettings;
+    void InitIncludepathsList();
+
+    /**
+    * @brief Populate the translations list.
+    */
+    void InitTranslationsList();
 
     /**
     * @brief List of applications user has specified
@@ -182,11 +207,18 @@ protected:
     ApplicationList *mTempApplications;
 
     /**
+    * @brief List of translations.
+    *
+    */
+    TranslationHandler *mTranslator;
+
+    /**
     * @brief Dialog from UI designer
     *
     */
     Ui::Settings mUI;
 private:
+    static const int LangCodeRole = Qt::UserRole;
 };
 /// @}
 #endif // SETTINGSDIALOG_H

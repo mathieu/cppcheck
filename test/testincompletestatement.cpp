@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,18 +38,19 @@ public:
 private:
     void check(const char code[])
     {
+        // Clear the error buffer..
+        errout.str("");
+
+        Settings settings;
+        settings._checkCodingStyle = true;
+
         // Tokenize..
-        Tokenizer tokenizer;
+        Tokenizer tokenizer(&settings, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         tokenizer.simplifyTokenList();
 
-        // Clear the error buffer..
-        errout.str("");
-
         // Check for incomplete statements..
-        Settings settings;
-        settings._checkCodingStyle = true;
         CheckOther checkOther(&tokenizer, &settings, this);
         checkOther.checkIncompleteStatement();
     }
@@ -65,6 +66,9 @@ private:
         TEST_CASE(intarray);
         TEST_CASE(structarraynull);
         TEST_CASE(structarray);
+        TEST_CASE(conditionalcall);     // ; 0==x ? X() : Y();
+        TEST_CASE(structinit);          // #2462 : ABC abc{1,2,3};
+        TEST_CASE(returnstruct);
     }
 
     void test1()
@@ -89,7 +93,7 @@ private:
               "    \"abc\";\n"
               "}\n");
 
-        ASSERT_EQUALS("[test.cpp:3]: (style) Redundant code: Found a statement that begins with string constant\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:3]: (warning) Redundant code: Found a statement that begins with string constant\n", errout.str());
     }
 
     void test3()
@@ -124,7 +128,7 @@ private:
               "    50;\n"
               "}\n");
 
-        ASSERT_EQUALS("[test.cpp:3]: (style) Redundant code: Found a statement that begins with numeric constant\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:3]: (warning) Redundant code: Found a statement that begins with numeric constant\n", errout.str());
     }
 
     void test_numeric()
@@ -169,6 +173,34 @@ private:
         ASSERT_EQUALS("", errout.str());
     }
 
+    void conditionalcall()
+    {
+        check("void f() {\n"
+              "    0==x ? X() : Y();\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void structinit()
+    {
+        // #2462 - C++0x struct initialization
+        check("void f() {\n"
+              "    ABC abc{1,2,3};\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
+
+        // #2482 - false positive for empty struct
+        check("struct A {};");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void returnstruct()
+    {
+        check("struct s foo() {\n"
+              "    return (struct s){0,0};\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
+    }
 };
 
 REGISTER_TEST(TestIncompleteStatement)

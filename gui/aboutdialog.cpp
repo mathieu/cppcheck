@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <QDialog>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QPushButton>
+#include <QWidget>
+#include <QString>
 #include "aboutdialog.h"
 
 AboutDialog::AboutDialog(const QString &version, QWidget *parent)
@@ -28,7 +27,7 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
     mUI.setupUi(this);
 
     mUI.mVersion->setText(mUI.mVersion->text().arg(version));
-    QString url = "<a href=\"http://cppcheck.wiki.sourceforge.net/\">http://cppcheck.wiki.sourceforge.net/</a>";
+    QString url = "<a href=\"http://cppcheck.sourceforge.net/\">http://cppcheck.sourceforge.net/</a>";
     mUI.mHomepage->setText(mUI.mHomepage->text().arg(url));
     connect(mUI.mButtons, SIGNAL(accepted()), this, SLOT(accept()));
 }

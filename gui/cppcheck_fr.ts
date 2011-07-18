@@ -15,10 +15,6 @@
         <source>Cppcheck - A tool for static C/C++ code analysis.</source>
         <translation>Cppcheck - Un outil d&apos;analyse statique de code C/C++.</translation>
     </message>
-    <message utf8="true">
-        <source>Copyright (C) 2007-2010 Daniel Marjamäki and cppcheck team.</source>
-        <translation>Copyright (C) 2007-2010 Daniel Marjamäki et cppcheck team.</translation>
-    </message>
     <message>
         <source>This program is licensed under the terms
 of the GNU General Public License version 3</source>
@@ -29,45 +25,16 @@ General Public License version 3</translation>
         <source>Visit Cppcheck homepage at %1</source>
         <translation>Visitez le site Cppcheck : %1</translation>
     </message>
+    <message utf8="true">
+        <source>Copyright © 2007-2011 Daniel Marjamäki and cppcheck team.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ApplicationDialog</name>
     <message>
         <source>Add an application</source>
         <translation>Ajouter une application</translation>
-    </message>
-    <message>
-        <source>Here you can add applications that can open error files.
-Specify a name for the application and the application to execute.
-
-The following texts are replaced with appropriate values when application is executed:
-(file) - Filename containing the error
-(line) - Line number containing the error
-(message) - Error message
-(severity) - Error severity
-
-Example opening a file with Kate and make Kate scroll to the correct line:
-kate -l(line) (file)</source>
-        <translation type="unfinished">Ici vous pouvez ajouter des applications pour ouvir les rapports d&apos;erreur
-Spécifiez le nom de l&apos;application et l&apos;application à exécuter.
-
-Les textes suivants sont remplacés avec les valeurs appropriées lorsque l&apos;application est lancée :
-(file) - Nom du fichier contenant l&apos;erreur
-(line) - Numéro de ligne où est l&apos;erreur
-(message) - Message d&apos;erreur
-(severity) - Séverité de l&apos;erreur
-
-
-Example : ouvrir un fichier avec kate et position l&apos;affichage sur la bonne ligne:
-kate -l(ligne) (fichier)</translation>
-    </message>
-    <message>
-        <source>Application&apos;s name</source>
-        <translation>Nom de l&apos;application</translation>
-    </message>
-    <message>
-        <source>Application to execute</source>
-        <translation>Application à exécuter</translation>
     </message>
     <message>
         <source>Browse</source>
@@ -86,8 +53,34 @@ kate -l(ligne) (fichier)</translation>
         <translation></translation>
     </message>
     <message>
-        <source>You must specify a name and a path for the application!</source>
-        <translation>Vous devez spécifier un nom et un chemin d&apos;accès pour l&apos;application !</translation>
+        <source>&amp;Executable:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Parameters:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You must specify a name, a path and parameters for the application!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Here you can add an application that can open error files. Specify a name for the application, the application executable and command line parameters for the application.
+
+The following texts in parameters are replaced with appropriate values when application is executed:
+(file) - Filename containing the error
+(line) - Line number containing the error
+(message) - Error message
+(severity) - Error severity
+
+Example opening a file with Kate and make Kate scroll to the correct line:
+Executable: kate
+Parameters: -l(line) (file)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Name:</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -106,10 +99,38 @@ kate -l(ligne) (fichier)</translation>
     </message>
 </context>
 <context>
-    <name>Fileview</name>
+    <name>LogView</name>
     <message>
-        <source>Fileview</source>
-        <translation type="unfinished">Visualisateur de fichier</translation>
+        <source>Checking Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text files (*.txt *.log);;All files (*.*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cppcheck</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open file for writing: &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -125,10 +146,6 @@ kate -l(ligne) (fichier)</translation>
     <message>
         <source>&amp;View</source>
         <translation type="unfinished">&amp;Affichage</translation>
-    </message>
-    <message>
-        <source>&amp;Language</source>
-        <translation type="unfinished">&amp;Langue</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -211,26 +228,6 @@ kate -l(ligne) (fichier)</translation>
         <translation type="unfinished">&amp;Préférences</translation>
     </message>
     <message>
-        <source>Show possible false positives</source>
-        <translation type="unfinished">Afficher les possibles faux positifs</translation>
-    </message>
-    <message>
-        <source>Show security errors</source>
-        <translation type="unfinished">Afficher les erreurs de sécurité</translation>
-    </message>
-    <message>
-        <source>Show style errors</source>
-        <translation type="unfinished">Afficher les erreurs de style</translation>
-    </message>
-    <message>
-        <source>Show possible style errors</source>
-        <translation type="unfinished">Afficher les erreurs possibles de style</translation>
-    </message>
-    <message>
-        <source>Show common errors</source>
-        <translation type="unfinished">Afficher les erreurs</translation>
-    </message>
-    <message>
         <source>&amp;Check all</source>
         <translation type="unfinished">Tout &amp;cocher</translation>
     </message>
@@ -245,10 +242,6 @@ kate -l(ligne) (fichier)</translation>
     <message>
         <source>&amp;Expand all</source>
         <translation type="unfinished">Tout &amp;afficher</translation>
-    </message>
-    <message>
-        <source>&amp;Toolbar</source>
-        <translation type="unfinished">&amp;Barre d&apos;outil</translation>
     </message>
     <message>
         <source>&amp;Contents</source>
@@ -275,24 +268,12 @@ kate -l(ligne) (fichier)</translation>
         <translation type="unfinished">Sélectionner le répertoire à vérifier</translation>
     </message>
     <message>
-        <source>Cannot exit while checking.
-
-Stop the checking before exiting.</source>
-        <translation type="unfinished">Ne peut pas quitter pendant une vérification.
-
-Arrêter la vérification avant de quitter.</translation>
-    </message>
-    <message>
         <source>License</source>
         <translation type="unfinished">Licence</translation>
     </message>
     <message>
         <source>Authors</source>
         <translation type="unfinished">Auteur</translation>
-    </message>
-    <message>
-        <source>XML files (*.xml);;Text files (*.txt);;CSV files (*.csv)</source>
-        <translation type="unfinished">Fichier XML (*.xml);;Fichier Texte (*.txt);;Fichier CSV (*.csv)</translation>
     </message>
     <message>
         <source>Save the report file</source>
@@ -313,18 +294,6 @@ Arrêter la vérification avant de quitter.</translation>
     <message>
         <source>Cppcheck - %1</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to change the language:
-
-%1
-
-</source>
-        <translation type="unfinished">Erreur lors du chargement de la langue :
-
-%1
-
-</translation>
     </message>
     <message>
         <source>English</source>
@@ -354,13 +323,332 @@ Arrêter la vérification avant de quitter.</translation>
         <source>Polish</source>
         <translation type="unfinished">Polonais</translation>
     </message>
+    <message>
+        <source>&amp;Toolbars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show style warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Standard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Standard items</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Open XML...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open P&amp;roject File...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;New Project File...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Log View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>C&amp;lose Project File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Edit Project File...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Statistics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Performance warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show performance warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show &amp;hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show information messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Portability</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show portability warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You must close the project file before selecting new files or directories!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the report file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking is running.
+
+Do you want to stop the checking and exit Cppcheck?.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML files version 2 (*.xml);;XML files version 1 (*.xml);;Text files (*.txt);;CSV files (*.csv)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML files version 1 (*.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML files version 2 (*.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project files (*.cppcheck);;All files(*.*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select Project File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select Project Filename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No project file loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Japanese</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Serbian</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>French</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There was a problem with loading the editor application settings.
+
+This is probably because the settings were changed between the Cppcheck versions. Please check (and fix) the editor application settings, otherwise the editor program might not start correctly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to change the user interface language:
+
+%1
+
+The user interface language has been reset to English. Open the Preferences-dialog to select any of the available languages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spanish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>toolBar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project MRU placeholder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick Filter:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found project file: %1
+
+Do you want to load this project file instead?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found project files from the directory.
+
+Do you want to proceed checking without using any of these project files?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project file
+
+%1
+
+ could not be found!
+
+Do you want to remove the file from the recently used projects -list?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Project</name>
+    <message>
+        <source>Cppcheck</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not read the project file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write the project file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFile</name>
+    <message>
+        <source>Project File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paths:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Defines:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Includes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Include directories:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ignore</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileDialog</name>
+    <message>
+        <source>Project file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select include directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select directory to ignore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a directory to check</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
-    <message>
-        <source>Incorrect language specified!</source>
-        <translation type="unfinished">Langue incorrecte !</translation>
-    </message>
     <message>
         <source>Language file %1 not found!</source>
         <translation type="unfinished">Fichier de langue %1 non trouvé !</translation>
@@ -368,6 +656,10 @@ Arrêter la vérification avant de quitter.</translation>
     <message>
         <source>Failed to load translation for language %1 from file %2</source>
         <translation type="unfinished">Erreur lors du chargement de la langue %1 depuis le fichier %2</translation>
+    </message>
+    <message>
+        <source>Unknown language specified!</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -383,10 +675,6 @@ Arrêter la vérification avant de quitter.</translation>
     <message>
         <source>Line</source>
         <translation type="unfinished">Ligne</translation>
-    </message>
-    <message>
-        <source>Message</source>
-        <translation type="unfinished">Message</translation>
     </message>
     <message>
         <source>Undefined file</source>
@@ -409,10 +697,6 @@ Arrêter la vérification avant de quitter.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Configure the text file viewer program in Cppcheck preferences/Applications.</source>
-        <translation type="unfinished">Configurez l&apos;application d&apos;affichage des fichers dans préférences/Applications.</translation>
-    </message>
-    <message>
         <source>Could not start %1
 
 Please check the application path and parameters are correct.</source>
@@ -421,20 +705,70 @@ Please check the application path and parameters are correct.</source>
 Merci de vérifier que le chemin de l&apos;application et que les paramètres sont corrects.</translation>
     </message>
     <message>
-        <source>possible error</source>
-        <translation type="unfinished">erreur possible</translation>
-    </message>
-    <message>
         <source>style</source>
         <translation type="unfinished">erreur de style</translation>
     </message>
     <message>
-        <source>possible style</source>
-        <translation type="unfinished">erreur de style possible</translation>
-    </message>
-    <message>
         <source>error</source>
         <translation type="unfinished">erreur</translation>
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find the file!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find file:
+%1
+Please select the directory where file is located.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select Directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>performance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>portability</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>debug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>[Inconclusive]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No editor application configured.
+
+Configure the editor application for Cppcheck in preferences/Applications.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No default editor application selected.
+
+Please select the default editor application in preferences/Applications.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -465,6 +799,18 @@ Pour configurer les erreurs affichées, ouvrez le menu d&apos;affichage.</transl
         <source>Failed to save the report.</source>
         <translation type="unfinished">Erreur lors de la sauvegarde du rapport.</translation>
     </message>
+    <message>
+        <source>Failed to read the report.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation type="unfinished">Message</translation>
+    </message>
 </context>
 <context>
     <name>Settings</name>
@@ -481,10 +827,6 @@ Pour configurer les erreurs affichées, ouvrez le menu d&apos;affichage.</transl
         <translation type="unfinished">Nombre de processus : </translation>
     </message>
     <message>
-        <source>Check all #ifdef configurations</source>
-        <translation type="unfinished">Vérifier toutes les configurations #ifdef</translation>
-    </message>
-    <message>
         <source>Show full path of files</source>
         <translation type="unfinished">Montrer le chemin complet des fichiers</translation>
     </message>
@@ -495,22 +837,6 @@ Pour configurer les erreurs affichées, ouvrez le menu d&apos;affichage.</transl
     <message>
         <source>Applications</source>
         <translation type="unfinished">Applications</translation>
-    </message>
-    <message>
-        <source>Add application</source>
-        <translation type="unfinished">Ajouter une application</translation>
-    </message>
-    <message>
-        <source>Delete application</source>
-        <translation type="unfinished">Supprimer l&apos;application</translation>
-    </message>
-    <message>
-        <source>Modify application</source>
-        <translation type="unfinished">Modifier l&apos;application</translation>
-    </message>
-    <message>
-        <source>Set as default application</source>
-        <translation type="unfinished">Définir comme application par défaut</translation>
     </message>
     <message>
         <source>Reports</source>
@@ -524,6 +850,66 @@ Pour configurer les erreurs affichées, ouvrez le menu d&apos;affichage.</transl
         <source>Save full path to files in reports</source>
         <translation type="unfinished">Sauvegarder le chemin complet des fichiers dans les rapports</translation>
     </message>
+    <message>
+        <source>Include paths:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ideal count:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TextLabel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force checking all #ifdef configurations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable inline suppressions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paths</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set as default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Show inconclusive errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S&amp;how internal warnings in log</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -534,6 +920,185 @@ Pour configurer les erreurs affichées, ouvrez le menu d&apos;affichage.</transl
     <message>
         <source>Modify an application</source>
         <translation type="unfinished">Modifier une application</translation>
+    </message>
+    <message>
+        <source>N/A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select include directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>[Default]</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>StatsDialog</name>
+    <message>
+        <source>Statistics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paths:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Include paths:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Defines:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous Scan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Path Selected:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number of Files Scanned:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan Duration:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Errors:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warnings:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stylistic warnings:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Portability warnings:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TextLabel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Performance issues:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Information messages:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to Clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 hour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 hours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 minute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 minutes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0.%1 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> and </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project Settings
+	Project:	%1
+	Paths:	%2
+	Include paths:	%3
+	Defines:	%4
+Previous Scan
+	Path selected:	%5
+	Number of files scanned:	%6
+	Scan duration:	%7
+Statistics
+	Errors:	%8
+	Warnings:	%9
+	Style warnings:	%10
+	Portability warnings:	%11
+	Performance warnings:	%12
+	Information messages:	%13
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;h3&gt;Project Settings&lt;h3&gt;
+&lt;table&gt;
+ &lt;tr&gt;&lt;th&gt;Project:&lt;/th&gt;&lt;td&gt;%1&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Paths:&lt;/th&gt;&lt;td&gt;%2&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Include paths:&lt;/th&gt;&lt;td&gt;%3&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Defines:&lt;/th&gt;&lt;td&gt;%4&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;
+&lt;h3&gt;Previous Scan&lt;/h3&gt;
+&lt;table&gt;
+ &lt;tr&gt;&lt;th&gt;Path selected:&lt;/th&gt;&lt;td&gt;%5&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Number of files scanned:&lt;/th&gt;&lt;td&gt;%6&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Scan duration:&lt;/th&gt;&lt;td&gt;%7&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;
+&lt;h3&gt;Statistics&lt;/h3&gt;
+ &lt;tr&gt;&lt;th&gt;Errors:&lt;/th&gt;&lt;td&gt;%8&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Warnings:&lt;/th&gt;&lt;td&gt;%9&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Style warnings:&lt;/th&gt;&lt;td&gt;%10&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Portability warnings:&lt;/th&gt;&lt;td&gt;%11&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Performance warnings:&lt;/th&gt;&lt;td&gt;%12&lt;/td&gt;&lt;/tr&gt;
+ &lt;tr&gt;&lt;th&gt;Information messages:&lt;/th&gt;&lt;td&gt;%13&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TxtReport</name>
+    <message>
+        <source>inconclusive</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

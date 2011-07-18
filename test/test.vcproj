@@ -3,487 +3,341 @@
 	ProjectType="Visual C++"
 	Version="9,00"
 	Name="test"
-	ProjectGUID="{BA98E531-D8B3-39CB-8171-064854404B81}"
-	Keyword="Qt4VSv1.0"
-	TargetFrameworkVersion="0"
-	>
+	ProjectGUID="{5B7869EA-A1CB-3E73-8569-5B385608779E}"
+	Keyword="Qt4VSv1.0">
 	<Platforms>
 		<Platform
-			Name="Win32"
-		/>
+			Name="Win32" />
 	</Platforms>
-	<ToolFiles>
-	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\Build\$(ConfigurationName)"
-			IntermediateDirectory="..\BuildTmp\$(TargetName)\$(ConfigurationName)"
-			ConfigurationType="1"
-			UseOfMFC="0"
+			OutputDirectory="."
 			ATLMinimizesCRunTimeLibraryUsage="false"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				WarningLevel="0"
-				DefaultCharType="0"
-				EnableErrorChecks="1"
-			/>
+			ConfigurationType="1"
+			IntermediateDirectory="temp\"
+			UseOfMfc="0">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="..\lib"
-				PreprocessorDefinitions="_DEBUG,WIN32,UNIT_TESTING"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				TreatWChar_tAsBuiltInType="false"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
-				WarningLevel="4"
+				AdditionalIncludeDirectories="&quot;.&quot;,&quot;..\cli&quot;,&quot;..\lib&quot;,&quot;..\externals&quot;,&quot;..\externals\tinyxml&quot;,..\..\Qt\VS4.7.0\mkspecs\win32-msvc2008"
+				AdditionalOptions="-Zm200 -w34100 -w34189"
+				AssemblerListingLocation="temp\"
+				BufferSecurityCheck="false"
 				DebugInformationFormat="3"
-			/>
+				ExceptionHandling="1"
+				GeneratePreprocessedFile="0"
+				ObjectFile="temp\"
+				Optimization ="4"
+				PreprocessorDefinitions="UNICODE,WIN32,QT_LARGEFILE_SUPPORT,_CRT_SECURE_NO_WARNINGS"
+				ProgramDataBaseFileName=".\"
+				RuntimeLibrary="3"
+				RuntimeTypeInfo="true"
+				SuppressStartupBanner="true"
+				TreatWChar_tAsBuiltInType="false"
+				WarningLevel="4" />
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="UNICODE,WIN32,QT_LARGEFILE_SUPPORT,UNIT_TESTING,_DEBUG"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool" />
 			<Tool
 				Name="VCLinkerTool"
-				IgnoreImportLibrary="true"
-				AdditionalDependencies="shlwapi.lib"
-				OutputFile="$(OutDir)\test.exe"
+				AdditionalDependencies="shlwapi.lib ../externals\pcre.lib"
+				AdditionalLibraryDirectories="../externals"
 				GenerateDebugInformation="true"
+				IgnoreImportLibrary="true"
+				LinkTimeCodeGeneration="0"
+				OutputFile="debug\test.exe"
 				ProgramDatabaseFile=""
 				SubSystem="1"
-				LinkTimeCodeGeneration="0"
-			/>
+				SuppressStartupBanner="true" />
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"
+				DefaultCharType="0"
+				EnableErrorChecks="1"
+				WarningLevel="0" />
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool" />
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool" />
 			<Tool
-				Name="VCBscMakeTool"
-				OutputFile="$(IntDir)/$(ProjectName).bsc"
-			/>
+				Name="VCPreLinkEventTool" />
 			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="UNICODE,WIN32,QT_LARGEFILE_SUPPORT,_CRT_SECURE_NO_WARNINGS,_DEBUG" />
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\Build\$(ConfigurationName)"
-			IntermediateDirectory="..\BuildTmp\$(TargetName)\$(ConfigurationName)"
-			ConfigurationType="1"
-			UseOfMFC="0"
+			OutputDirectory="."
 			ATLMinimizesCRunTimeLibraryUsage="false"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				WarningLevel="0"
-				DefaultCharType="0"
-				EnableErrorChecks="1"
-			/>
+			ConfigurationType="1"
+			IntermediateDirectory="temp\"
+			UseOfMfc="0">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
-				EnableIntrinsicFunctions="true"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\lib"
-				PreprocessorDefinitions="NDEBUG,WIN32,UNIT_TESTING"
+				AdditionalIncludeDirectories="&quot;.&quot;,&quot;..\cli&quot;,&quot;..\lib&quot;,&quot;..\externals&quot;,&quot;..\externals\tinyxml&quot;,..\..\..\..\Qt\qt-everywhere-opensource-src-4.7.2-vs2008-x86\mkspecs\win32-msvc2008"
+				AdditionalOptions="-Zm200 -w34100 -w34189"
+				AssemblerListingLocation="temp\"
+				BufferSecurityCheck="false"
+				DebugInformationFormat="0"
+				ExceptionHandling="1"
+				GeneratePreprocessedFile="0"
+				ObjectFile="temp\"
+				Optimization ="2"
+				PreprocessorDefinitions="QT_NO_DEBUG,NDEBUG,UNICODE,WIN32,QT_LARGEFILE_SUPPORT,_CRT_SECURE_NO_WARNINGS,NDEBUG"
+				ProgramDataBaseFileName=".\"
 				RuntimeLibrary="2"
+				RuntimeTypeInfo="true"
+				SuppressStartupBanner="true"
 				TreatWChar_tAsBuiltInType="false"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
-				WarningLevel="4"
-				DebugInformationFormat="3"
-			/>
+				WarningLevel="4" />
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="QT_NO_DEBUG,NDEBUG,UNICODE,WIN32,QT_LARGEFILE_SUPPORT,UNIT_TESTING"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool" />
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="shlwapi.lib ../externals\pcre.lib"
+				AdditionalLibraryDirectories="../externals"
+				GenerateDebugInformation="false"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="shlwapi.lib"
-				OutputFile="$(OutDir)\test.exe"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				LinkTimeCodeGeneration="0"
+				OutputFile="release\test.exe"
 				ProgramDatabaseFile=""
 				SubSystem="1"
-				LinkTimeCodeGeneration="1"
-			/>
+				SuppressStartupBanner="true" />
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"
+				DefaultCharType="0"
+				EnableErrorChecks="1"
+				WarningLevel="0" />
 			<Tool
-				Name="VCManifestTool"
-			/>
+				Name="VCPostBuildEventTool" />
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPreBuildEventTool" />
 			<Tool
-				Name="VCBscMakeTool"
-				OutputFile="$(IntDir)/$(ProjectName).bsc"
-			/>
+				Name="VCPreLinkEventTool" />
 			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="QT_NO_DEBUG,NDEBUG,UNICODE,WIN32,QT_LARGEFILE_SUPPORT,_CRT_SECURE_NO_WARNINGS" />
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
-			>
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\lib\checkautovariables.cpp"
-				>
-			</File>
+				RelativePath="..\lib\check64bit.cpp" />
 			<File
-				RelativePath="..\lib\checkbufferoverrun.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkautovariables.cpp" />
 			<File
-				RelativePath="..\lib\checkclass.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkbufferoverrun.cpp" />
 			<File
-				RelativePath="..\lib\checkdangerousfunctions.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkclass.cpp" />
 			<File
-				RelativePath="..\lib\checkexceptionsafety.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkexceptionsafety.cpp" />
 			<File
-				RelativePath="..\lib\checkmemoryleak.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkmemoryleak.cpp" />
 			<File
-				RelativePath="..\lib\checkother.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checknullpointer.cpp" />
 			<File
-				RelativePath="..\lib\checkstl.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkobsoletefunctions.cpp" />
 			<File
-				RelativePath="..\lib\checkunusedfunctions.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkother.cpp" />
 			<File
-				RelativePath="..\lib\cppcheck.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkpostfixoperator.cpp" />
 			<File
-				RelativePath="..\lib\errorlogger.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkstl.cpp" />
 			<File
-				RelativePath="..\lib\executionpath.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkuninitvar.cpp" />
 			<File
-				RelativePath="..\lib\filelister.cpp"
-				>
-			</File>
+				RelativePath="..\lib\checkunusedfunctions.cpp" />
 			<File
-				RelativePath="..\lib\filelister_win32.cpp"
-				>
-			</File>
+				RelativePath="..\cli\cmdlineparser.cpp" />
 			<File
-				RelativePath="..\lib\mathlib.cpp"
-				>
-			</File>
+				RelativePath="..\lib\cppcheck.cpp" />
 			<File
-				RelativePath="..\lib\preprocessor.cpp"
-				>
-			</File>
+				RelativePath="..\cli\cppcheckexecutor.cpp" />
 			<File
-				RelativePath="..\lib\settings.cpp"
-				>
-			</File>
+				RelativePath="..\lib\errorlogger.cpp" />
 			<File
-				RelativePath="testautovariables.cpp"
-				>
-			</File>
+				RelativePath="..\lib\executionpath.cpp" />
 			<File
-				RelativePath="testbufferoverrun.cpp"
-				>
-			</File>
+				RelativePath="..\cli\filelister.cpp" />
 			<File
-				RelativePath="testcharvar.cpp"
-				>
-			</File>
+				RelativePath="..\lib\mathlib.cpp" />
 			<File
-				RelativePath="testclass.cpp"
-				>
-			</File>
+				RelativePath="options.cpp" />
 			<File
-				RelativePath="testconstructors.cpp"
-				>
-			</File>
+				RelativePath="..\lib\path.cpp" />
 			<File
-				RelativePath="testcppcheck.cpp"
-				>
-			</File>
+				RelativePath="..\cli\pathmatch.cpp" />
 			<File
-				RelativePath="testdangerousfunctions.cpp"
-				>
-			</File>
+				RelativePath="..\lib\preprocessor.cpp" />
 			<File
-				RelativePath="testdivision.cpp"
-				>
-			</File>
+				RelativePath="..\lib\settings.cpp" />
 			<File
-				RelativePath="testexceptionsafety.cpp"
-				>
-			</File>
+				RelativePath="..\lib\symboldatabase.cpp" />
 			<File
-				RelativePath="testfilelister.cpp"
-				>
-			</File>
+				RelativePath="testautovariables.cpp" />
 			<File
-				RelativePath="testincompletestatement.cpp"
-				>
-			</File>
+				RelativePath="testbufferoverrun.cpp" />
 			<File
-				RelativePath="testmathlib.cpp"
-				>
-			</File>
+				RelativePath="testcharvar.cpp" />
 			<File
-				RelativePath="testmemleak.cpp"
-				>
-			</File>
+				RelativePath="testclass.cpp" />
 			<File
-				RelativePath="testother.cpp"
-				>
-			</File>
+				RelativePath="testcmdlineparser.cpp" />
 			<File
-				RelativePath="testpreprocessor.cpp"
-				>
-			</File>
+				RelativePath="testconstructors.cpp" />
 			<File
-				RelativePath="testredundantif.cpp"
-				>
-			</File>
+				RelativePath="testcppcheck.cpp" />
 			<File
-				RelativePath="testrunner.cpp"
-				>
-			</File>
+				RelativePath="testdivision.cpp" />
 			<File
-				RelativePath="testsimplifytokens.cpp"
-				>
-			</File>
+				RelativePath="testerrorlogger.cpp" />
 			<File
-				RelativePath="teststl.cpp"
-				>
-			</File>
+				RelativePath="testexceptionsafety.cpp" />
 			<File
-				RelativePath="testsuite.cpp"
-				>
-			</File>
+				RelativePath="testfilelister.cpp" />
 			<File
-				RelativePath="testtoken.cpp"
-				>
-			</File>
+				RelativePath="testincompletestatement.cpp" />
 			<File
-				RelativePath="testtokenize.cpp"
-				>
-			</File>
+				RelativePath="testmathlib.cpp" />
 			<File
-				RelativePath="testunusedfunctions.cpp"
-				>
-			</File>
+				RelativePath="testmemleak.cpp" />
 			<File
-				RelativePath="testunusedprivfunc.cpp"
-				>
-			</File>
+				RelativePath="testnullpointer.cpp" />
 			<File
-				RelativePath="testunusedvar.cpp"
-				>
-			</File>
+				RelativePath="testobsoletefunctions.cpp" />
 			<File
-				RelativePath=".\tinyxml\tinystr.cpp"
-				>
-			</File>
+				RelativePath="testoptions.cpp" />
 			<File
-				RelativePath=".\tinyxml\tinyxml.cpp"
-				>
-			</File>
+				RelativePath="testother.cpp" />
 			<File
-				RelativePath=".\tinyxml\tinyxmlerror.cpp"
-				>
-			</File>
+				RelativePath="testpath.cpp" />
 			<File
-				RelativePath=".\tinyxml\tinyxmlparser.cpp"
-				>
-			</File>
+				RelativePath="testpathmatch.cpp" />
 			<File
-				RelativePath="..\lib\token.cpp"
-				>
-			</File>
+				RelativePath="testpostfixoperator.cpp" />
 			<File
-				RelativePath="..\lib\tokenize.cpp"
-				>
-			</File>
+				RelativePath="testpreprocessor.cpp" />
+			<File
+				RelativePath="testrunner.cpp" />
+			<File
+				RelativePath="testsettings.cpp" />
+			<File
+				RelativePath="testsimplifytokens.cpp" />
+			<File
+				RelativePath="teststl.cpp" />
+			<File
+				RelativePath="testsuite.cpp" />
+			<File
+				RelativePath="testsuppressions.cpp" />
+			<File
+				RelativePath="testsymboldatabase.cpp" />
+			<File
+				RelativePath="testthreadexecutor.cpp" />
+			<File
+				RelativePath="testtoken.cpp" />
+			<File
+				RelativePath="testtokenize.cpp" />
+			<File
+				RelativePath="testuninitvar.cpp" />
+			<File
+				RelativePath="testunusedfunctions.cpp" />
+			<File
+				RelativePath="testunusedprivfunc.cpp" />
+			<File
+				RelativePath="testunusedvar.cpp" />
+			<File
+				RelativePath="..\cli\threadexecutor.cpp" />
+			<File
+				RelativePath="..\lib\timer.cpp" />
+			<File
+				RelativePath="..\externals\tinyxml\tinystr.cpp" />
+			<File
+				RelativePath="..\externals\tinyxml\tinyxml.cpp" />
+			<File
+				RelativePath="..\externals\tinyxml\tinyxmlerror.cpp" />
+			<File
+				RelativePath="..\externals\tinyxml\tinyxmlparser.cpp" />
+			<File
+				RelativePath="..\lib\token.cpp" />
+			<File
+				RelativePath="..\lib\tokenize.cpp" />
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
-			>
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\lib\check.h"
-				>
-			</File>
+				RelativePath="..\lib\check.h" />
 			<File
-				RelativePath="..\lib\checkautovariables.h"
-				>
-			</File>
+				RelativePath="..\lib\check64bit.h" />
 			<File
-				RelativePath="..\lib\checkbufferoverrun.h"
-				>
-			</File>
+				RelativePath="..\lib\checkautovariables.h" />
 			<File
-				RelativePath="..\lib\checkclass.h"
-				>
-			</File>
+				RelativePath="..\lib\checkbufferoverrun.h" />
 			<File
-				RelativePath="..\lib\checkdangerousfunctions.h"
-				>
-			</File>
+				RelativePath="..\lib\checkclass.h" />
 			<File
-				RelativePath="..\lib\checkexceptionsafety.h"
-				>
-			</File>
+				RelativePath="..\lib\checkexceptionsafety.h" />
 			<File
-				RelativePath="..\lib\checkmemoryleak.h"
-				>
-			</File>
+				RelativePath="..\lib\checkmemoryleak.h" />
 			<File
-				RelativePath="..\lib\checkother.h"
-				>
-			</File>
+				RelativePath="..\lib\checknullpointer.h" />
 			<File
-				RelativePath="..\lib\checkstl.h"
-				>
-			</File>
+				RelativePath="..\lib\checkobsoletefunctions.h" />
 			<File
-				RelativePath="..\lib\checkunusedfunctions.h"
-				>
-			</File>
+				RelativePath="..\lib\checkother.h" />
 			<File
-				RelativePath="..\lib\classinfo.h"
-				>
-			</File>
+				RelativePath="..\lib\checkpostfixoperator.h" />
 			<File
-				RelativePath="..\lib\cppcheck.h"
-				>
-			</File>
+				RelativePath="..\lib\checkstl.h" />
 			<File
-				RelativePath="..\lib\errorlogger.h"
-				>
-			</File>
+				RelativePath="..\lib\checkuninitvar.h" />
 			<File
-				RelativePath="..\lib\executionpath.h"
-				>
-			</File>
+				RelativePath="..\lib\checkunusedfunctions.h" />
 			<File
-				RelativePath="..\lib\filelister.h"
-				>
-			</File>
+				RelativePath="..\cli\cmdlineparser.h" />
 			<File
-				RelativePath="..\lib\filelister_win32.h"
-				>
-			</File>
+				RelativePath="..\lib\cppcheck.h" />
 			<File
-				RelativePath="..\lib\mathlib.h"
-				>
-			</File>
+				RelativePath="..\cli\cppcheckexecutor.h" />
 			<File
-				RelativePath="..\lib\preprocessor.h"
-				>
-			</File>
+				RelativePath="..\lib\errorlogger.h" />
 			<File
-				RelativePath="..\lib\settings.h"
-				>
-			</File>
+				RelativePath="..\lib\executionpath.h" />
 			<File
-				RelativePath="testsuite.h"
-				>
-			</File>
+				RelativePath="..\cli\filelister.h" />
 			<File
-				RelativePath=".\tinyxml\tinystr.h"
-				>
-			</File>
+				RelativePath="..\lib\mathlib.h" />
 			<File
-				RelativePath=".\tinyxml\tinyxml.h"
-				>
-			</File>
+				RelativePath="options.h" />
 			<File
-				RelativePath="..\lib\token.h"
-				>
-			</File>
+				RelativePath="..\lib\path.h" />
 			<File
-				RelativePath="..\lib\tokenize.h"
-				>
-			</File>
+				RelativePath="..\cli\pathmatch.h" />
+			<File
+				RelativePath="..\lib\preprocessor.h" />
+			<File
+				RelativePath="redirect.h" />
+			<File
+				RelativePath="..\lib\settings.h" />
+			<File
+				RelativePath="..\lib\symboldatabase.h" />
+			<File
+				RelativePath="testsuite.h" />
+			<File
+				RelativePath="..\cli\threadexecutor.h" />
+			<File
+				RelativePath="..\lib\timer.h" />
+			<File
+				RelativePath="..\externals\tinyxml\tinystr.h" />
+			<File
+				RelativePath="..\externals\tinyxml\tinyxml.h" />
+			<File
+				RelativePath="..\lib\token.h" />
+			<File
+				RelativePath="..\lib\tokenize.h" />
 		</Filter>
 	</Files>
 	<Globals>

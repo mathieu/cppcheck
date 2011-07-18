@@ -1,10 +1,15 @@
 cppcheck
+cppcheck.exe
 testrunner
+testrunner.exe
 *.o
 *.bak
+*.gcno
 tools/dmake
+dmake
 tools/errmsg
 # VS generated files
+*.obj
 *.ncb
 *.suo
 *.user
@@ -13,6 +18,10 @@ tools/errmsg
 # VS build folders
 Build/
 BuildTmp/
+# XCode build folders and files
+build/
+*.pbxuser
+*.mode[0-9]v[0-9]
 # GUI build folders
 gui/debug/
 gui/release/
@@ -23,16 +32,20 @@ gui/Makefile.debug
 gui/Makefile.release
 gui/gui.sln
 gui/gui.vcproj
-gui/gui
+gui/cppcheck-gui
 gui/qrc_gui.cpp
 gui/*.qm
 # Doxygen output folder
 doxyoutput/
 # qmake generated
+
 src/Makefile
 build
 *.sdf
 ipch
 *.opensdf
+*.orig
+
+tags
 Cppcheck.xcodeproj/*.mode1v3
 Cppcheck.xcodeproj/*.pbxuser

@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <QString>
 #include <QStringList>
 #include <QFile>
+#include "erroritem.h"
 
 /// @addtogroup GUI
 /// @{
@@ -38,6 +39,7 @@ public:
     {
         TXT,
         XML,
+        XMLV2,
         CSV,
     };
 
@@ -49,6 +51,12 @@ public:
     * @return true if succeeded, false if file could not be created.
     */
     virtual bool Create();
+
+    /**
+    * @brief Open the existing report (file).
+    * @return true if succeeded, false if file could not be created.
+    */
+    virtual bool Open();
 
     /**
     * @brief Close the report (file).
@@ -67,10 +75,9 @@ public:
 
     /**
     * @brief Write error to report.
+    * @param error Error data.
     */
-    virtual void WriteError(const QStringList &files, const QStringList &lines,
-                            const QString &id, const QString &severity,
-                            const QString &msg) = 0;
+    virtual void WriteError(const ErrorItem &error) = 0;
 
 protected:
 

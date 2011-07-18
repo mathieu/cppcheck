@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,58 +16,83 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QObject>
+#include <QString>
 #include <QFile>
-#include <QXmlStreamWriter>
+#include <QXmlStreamReader>
+#include "report.h"
 #include "xmlreport.h"
+
+static const char ResultElementName[] = "results";
+static const char VersionAttribute[] = "version";
 
 XmlReport::XmlReport(const QString &filename, QObject * parent) :
     Report(filename, parent)
 {
 }
 
-XmlReport::~XmlReport()
+QString XmlReport::quoteMessage(const QString &message)
 {
-    Close();
+    QString quotedMessage(message);
+    quotedMessage.replace("&", "&amp;");
+    quotedMessage.replace("\"", "&quot;");
+    quotedMessage.replace("'", "&#039;");
+    quotedMessage.replace("<", "&lt;");
+    quotedMessage.replace(">", "&gt;");
+    return quotedMessage;
 }
 
-bool XmlReport::Create()
+QString XmlReport::unquoteMessage(const QString &message)
 {
-    bool success = false;
-    if (Report::Create())
+    QString quotedMessage(message);
+    quotedMessage.replace("&amp;", "&");
+    quotedMessage.replace("&quot;", "\"");
+    quotedMessage.replace("&#039;", "'");
+    quotedMessage.replace("&lt;", "<");
+    quotedMessage.replace("&gt;", ">");
+    return quotedMessage;
+}
+
+int XmlReport::determineVersion(const QString &filename)
+{
+    QFile file;
+    file.setFileName(filename);
+    bool succeed = file.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (!succeed)
+        return 0;
+
+    QXmlStreamReader reader(&file);
+    while (!reader.atEnd())
     {
-        mXmlWriter.setDevice(Report::GetFile());
-        success = true;
+        switch (reader.readNext())
+        {
+        case QXmlStreamReader::StartElement:
+            if (reader.name() == ResultElementName)
+            {
+                QXmlStreamAttributes attribs = reader.attributes();
+                if (attribs.hasAttribute(QString(VersionAttribute)))
+                {
+                    int ver = attribs.value("", VersionAttribute).toString().toInt();
+                    return ver;
+                }
+                else
+                    return 1;
+            }
+            break;
+
+            // Not handled
+        case QXmlStreamReader::EndElement:
+        case QXmlStreamReader::NoToken:
+        case QXmlStreamReader::Invalid:
+        case QXmlStreamReader::StartDocument:
+        case QXmlStreamReader::EndDocument:
+        case QXmlStreamReader::Characters:
+        case QXmlStreamReader::Comment:
+        case QXmlStreamReader::DTD:
+        case QXmlStreamReader::EntityReference:
+        case QXmlStreamReader::ProcessingInstruction:
+            break;
+        }
     }
-    return success;
-}
-
-void XmlReport::WriteHeader()
-{
-    mXmlWriter.setAutoFormatting(true);
-    mXmlWriter.writeStartDocument();
-    mXmlWriter.writeStartElement("results");
-}
-
-void XmlReport::WriteFooter()
-{
-    mXmlWriter.writeEndElement();
-    mXmlWriter.writeEndDocument();
-}
-
-void XmlReport::WriteError(const QStringList &files, const QStringList &lines,
-                           const QString &id, const QString &severity, const QString &msg)
-{
-    /*
-    Error example from the core program in xml
-    <error file="gui/test.cpp" line="14" id="mismatchAllocDealloc" severity="error" msg="Mismatching allocation and deallocation: k"/>
-    The callstack seems to be ignored here aswell, instead last item of the stack is used
-    */
-
-    mXmlWriter.writeStartElement("error");
-    mXmlWriter.writeAttribute("file", files[files.size() - 1]);
-    mXmlWriter.writeAttribute("line", lines[lines.size() - 1]);
-    mXmlWriter.writeAttribute("id", id);
-    mXmlWriter.writeAttribute("severity", severity);
-    mXmlWriter.writeAttribute("msg", msg);
-    mXmlWriter.writeEndElement();
+    return 0;
 }

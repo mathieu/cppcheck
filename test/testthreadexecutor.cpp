@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include "cppcheck.h"
 #include "testsuite.h"
 #include "threadexecutor.h"
+#include "cppcheckexecutor.h"
 
 #include <algorithm>
 #include <map>
@@ -45,7 +46,7 @@ private:
      * Execute check using n jobs for y files which are have
      * identical data, given within data.
      */
-    void check( int jobs, int files, const std::string &data)
+    void check(unsigned int jobs, int files, int result, const std::string &data)
     {
         errout.str("");
         output.str("");
@@ -56,7 +57,8 @@ private:
         }
 
         std::vector<std::string> filenames;
-        for( int i = 1; i <= files; ++i )
+        std::map<std::string, long> filesizes;
+        for (int i = 1; i <= files; ++i)
         {
             std::ostringstream oss;
             oss << "file_" << i << ".cpp";
@@ -65,17 +67,21 @@ private:
 
         Settings settings;
         settings._jobs = jobs;
-        ThreadExecutor executor(filenames, settings, *this);
-        for(unsigned int i = 0; i < filenames.size(); ++i)
-            executor.addFileContent(filenames[i], data );
+        ThreadExecutor executor(filenames, filesizes, settings, *this);
+        for (unsigned int i = 0; i < filenames.size(); ++i)
+            executor.addFileContent(filenames[i], data);
 
-        ASSERT_EQUALS(files, executor.check());
+        ASSERT_EQUALS(result, executor.check());
     }
 
     void run()
     {
-        // This is commented out, because it causes a deadlock
-        // TEST_CASE(deadlock_with_many_errors);
+        TEST_CASE(deadlock_with_many_errors);
+        TEST_CASE(no_errors_more_files);
+        TEST_CASE(no_errors_less_files);
+        TEST_CASE(no_errors_equal_amount_files);
+        TEST_CASE(one_error_less_files);
+        TEST_CASE(one_error_several_files);
     }
 
     void deadlock_with_many_errors()
@@ -83,11 +89,58 @@ private:
         std::ostringstream oss;
         oss << "int main()\n"
             << "{\n";
-        for( int i = 0; i < 500; i++ )
+        for (int i = 0; i < 500; i++)
             oss << "  {char *a = malloc(10);}\n";
 
         oss << "}\n";
-        check( 2, 3, oss.str() );
+        check(2, 3, 3, oss.str());
+    }
+
+    void no_errors_more_files()
+    {
+        std::ostringstream oss;
+        oss << "int main()\n"
+            << "{\n";
+        oss << "}\n";
+        check(2, 3, 0, oss.str());
+    }
+
+    void no_errors_less_files()
+    {
+        std::ostringstream oss;
+        oss << "int main()\n"
+            << "{\n";
+        oss << "}\n";
+        check(2, 1, 0, oss.str());
+    }
+
+    void no_errors_equal_amount_files()
+    {
+        std::ostringstream oss;
+        oss << "int main()\n"
+            << "{\n";
+        oss << "}\n";
+        check(2, 2, 0, oss.str());
+    }
+
+    void one_error_less_files()
+    {
+        std::ostringstream oss;
+        oss << "int main()\n"
+            << "{\n";
+        oss << "  {char *a = malloc(10);}\n";
+        oss << "}\n";
+        check(2, 1, 1, oss.str());
+    }
+
+    void one_error_several_files()
+    {
+        std::ostringstream oss;
+        oss << "int main()\n"
+            << "{\n";
+        oss << "  {char *a = malloc(10);}\n";
+        oss << "}\n";
+        check(2, 20, 20, oss.str());
     }
 };
 

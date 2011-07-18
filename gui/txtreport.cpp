@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QDir>
 #include <QFile>
 #include <QTextStream>
 #include "txtreport.h"
@@ -51,11 +52,8 @@ void TxtReport::WriteFooter()
     // No footer for txt report
 }
 
-void TxtReport::WriteError(const QStringList &files, const QStringList &lines,
-                           const QString &id, const QString &severity, const QString &msg)
+void TxtReport::WriteError(const ErrorItem &error)
 {
-    Q_UNUSED(id);
-
     /*
     Error example from the core program in text
     [gui/test.cpp:23] -> [gui/test.cpp:14]: (error) Mismatching allocation and deallocation: k
@@ -63,21 +61,27 @@ void TxtReport::WriteError(const QStringList &files, const QStringList &lines,
 
     QString line;
 
-    for (int i = 0; i < lines.size(); i++)
+    for (int i = 0; i < error.lines.size(); i++)
     {
-        line += QString("[%1:%2]").arg(files[i]).arg(lines[i]);
-        if (i < lines.size() - 1 && lines.size() > 0)
+        const QString file = QDir::toNativeSeparators(error.files[i]);
+        line += QString("[%1:%2]").arg(file).arg(error.lines[i]);
+        if (i < error.lines.size() - 1 && error.lines.size() > 0)
         {
             line += " -> ";
         }
 
-        if (i == lines.size() - 1)
+        if (i == error.lines.size() - 1)
         {
             line += ": ";
         }
     }
-
-    line += QString("(%1) %2").arg(severity).arg(msg);
+    line += QString("(%1) ").arg(GuiSeverity::toString(error.severity));
+    if (error.inconclusive)
+    {
+        line += tr("inconclusive");
+        line += " ";
+    }
+    line += error.summary;
 
     mTxtWriter << line << endl;
 }

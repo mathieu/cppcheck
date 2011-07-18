@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,43 +16,68 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
 #include "testsuite.h"
+#include "filelister.h"
+#include <fstream>
+#include <algorithm>
 
-#if defined(_WIN32)
-#include "../lib/filelister_win32.h"
-#else // POSIX-style system
-#include "../lib/filelister_unix.h"
-#endif
-
-class TestFileLister : public TestFixture
+class TestFileLister: public TestFixture
 {
 public:
-    TestFileLister() : TestFixture("TestFileLister")
-    { }
+    TestFileLister()
+        :TestFixture("TestFileLister")
+    {}
 
 private:
-
     void run()
     {
-        TEST_CASE(simplify_path);
+        // bail out if the tests are not executed from the base folder
+        {
+            std::ifstream fin("test/testfilelister.cpp");
+            if (!fin.is_open())
+                return;
+        }
+
+        TEST_CASE(isDirectory);
+        TEST_CASE(recursiveAddFiles);
     }
 
-    void simplify_path()
+    void isDirectory()
     {
-        ASSERT_EQUALS("index.h", getFileLister()->simplifyPath("index.h"));
-        ASSERT_EQUALS("/index.h", getFileLister()->simplifyPath("/index.h"));
-        ASSERT_EQUALS("/path/", getFileLister()->simplifyPath("/path/"));
-        ASSERT_EQUALS("/", getFileLister()->simplifyPath("/"));
-        ASSERT_EQUALS("./index.h", getFileLister()->simplifyPath("./index.h"));
-        ASSERT_EQUALS("../index.h", getFileLister()->simplifyPath("../index.h"));
-        ASSERT_EQUALS("/index.h", getFileLister()->simplifyPath("/path/../index.h"));
-        ASSERT_EQUALS("/index.h", getFileLister()->simplifyPath("/path/../other/../index.h"));
-        ASSERT_EQUALS("/index.h", getFileLister()->simplifyPath("/path/../other///././../index.h"));
-        ASSERT_EQUALS("../path/index.h", getFileLister()->simplifyPath("../path/other/../index.h"));
-        ASSERT_EQUALS("a/index.h", getFileLister()->simplifyPath("a/../a/index.h"));
-        ASSERT_EQUALS("a/..", getFileLister()->simplifyPath("a/.."));
+        ASSERT_EQUALS(false, FileLister::isDirectory("readme.txt"));
+        ASSERT_EQUALS(true, FileLister::isDirectory("lib"));
+    }
+
+    void recursiveAddFiles()
+    {
+        // Recursively add add files..
+        std::vector<std::string> filenames;
+        std::map<std::string, long> filesizes;
+        FileLister::recursiveAddFiles(filenames, filesizes, ".");
+
+        // Ensure a size entry is present for each listed file
+        for (std::vector<std::string>::const_iterator i = filenames.begin(); i != filenames.end(); ++i)
+        {
+            ASSERT(filesizes.find(*i) != filesizes.end());
+        }
+
+        // In case there are leading "./"..
+        for (unsigned int i = 0; i < filenames.size(); ++i)
+        {
+            if (filenames[i].compare(0,2,"./") == 0)
+                filenames[i].erase(0,2);
+        }
+
+        // Make sure source files are added..
+        ASSERT(std::find(filenames.begin(), filenames.end(), "cli/main.cpp") != filenames.end());
+        ASSERT(std::find(filenames.begin(), filenames.end(), "lib/token.cpp") != filenames.end());
+        ASSERT(std::find(filenames.begin(), filenames.end(), "lib/tokenize.cpp") != filenames.end());
+        ASSERT(std::find(filenames.begin(), filenames.end(), "test/testfilelister.cpp") != filenames.end());
+
+        // Make sure headers are not added..
+        ASSERT(std::find(filenames.begin(), filenames.end(), "lib/tokenize.h") == filenames.end());
     }
 };
 
 REGISTER_TEST(TestFileLister)
+

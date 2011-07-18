@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -103,6 +103,8 @@ public:
      * - "%bool%" true or false
      * - "%str%" Any token starting with &quot;-character (C-string).
      * - "%varid%" Match with parameter varid
+     * - "%or%" A bitwise-or operator '|'
+     * - "%oror%" A logical-or operator '||'
      * - "[abc]" Any of the characters 'a' or 'b' or 'c'
      * - "int|void|char" Any of the strings, int, void or char
      * - "int|void|char|" Any of the strings, int, void or char or empty string
@@ -116,7 +118,6 @@ public:
      * match its pattern, false is returned.
      *
      * @todo pattern "%type%|%num%" should mean either a type or a num.
-     * @todo pattern "%OR%|%OROR%" should mean either a "|" or a "||"
      *
      * @param tok List of tokens to be compared to the pattern
      * @param pattern The pattern against which the tokens are compared,
@@ -140,13 +141,67 @@ public:
     {
         return _isName;
     }
+    void isName(bool name)
+    {
+        _isName = name;
+    }
     bool isNumber() const
     {
         return _isNumber;
     }
+    void isNumber(bool number)
+    {
+        _isNumber = number;
+    }
+    bool isArithmeticalOp() const
+    {
+        return (this && (_str=="<<" || _str==">>" || (_str.size()==1 && _str.find_first_of("+-*/%") != std::string::npos)));
+    }
+    bool isOp() const
+    {
+        if (!this)
+            return false;
+
+        return (isArithmeticalOp() ||
+                _str == "&&" ||
+                _str == "||" ||
+                _str == "==" ||
+                _str == "!=" ||
+                _str == "<"  ||
+                _str == "<=" ||
+                _str == ">"  ||
+                _str == ">=" ||
+                (_str.size() == 1 && _str.find_first_of("&|^~!") != std::string::npos));
+    }
+    bool isExtendedOp() const
+    {
+        return isOp() ||
+               (this && _str.size() == 1 && _str.find_first_of(",[]()?:") != std::string::npos);
+    }
+    bool isAssignmentOp() const
+    {
+        if (!this)
+            return false;
+
+        return (_str == "="   ||
+                _str == "+="  ||
+                _str == "-="  ||
+                _str == "*="  ||
+                _str == "/="  ||
+                _str == "%="  ||
+                _str == "&="  ||
+                _str == "^="  ||
+                _str == "|="  ||
+                _str == "<<=" ||
+                _str == ">>=");
+    }
     bool isBoolean() const
     {
         return _isBoolean;
+    }
+    void isBoolean(bool boolean)
+    {
+        _isBoolean = boolean;
     }
     bool isUnsigned() const
     {
@@ -163,6 +218,14 @@ public:
     void isSigned(bool sign)
     {
         _isSigned = sign;
+    }
+    bool isPointerCompare() const
+    {
+        return _isPointerCompare;
+    }
+    void isPointerCompare(bool b)
+    {
+        _isPointerCompare = b;
     }
     bool isLong() const
     {
@@ -181,9 +244,9 @@ public:
         _isUnused = used;
     }
     bool isStandardType() const;
-    bool isIntegerType() const;
 
     static const Token *findmatch(const Token *tok, const char pattern[], unsigned int varId = 0);
+    static const Token *findmatch(const Token *tok, const char pattern[], const Token *end, unsigned int varId = 0);
 
     /**
      * Needle is build from multiple alternatives. If one of
@@ -283,7 +346,7 @@ public:
     static void replace(Token *replaceThis, Token *start, Token *end);
 
     /** Stringify a token list (with or without varId) */
-    std::string stringifyList(bool varid = 0, const char *title = 0) const;
+    std::string stringifyList(bool varid = false, const char *title = 0) const;
     std::string stringifyList(bool varid, const char *title, const std::vector<std::string> &fileNames) const;
 
     /**
@@ -337,6 +400,23 @@ public:
      */
     static void move(Token *srcStart, Token *srcEnd, Token *newLocation);
 
+    /** Get progressValue */
+    unsigned int progressValue() const
+    {
+        return _progressValue;
+    }
+
+    /** Calculate progress values for all tokens */
+    void assignProgressValues()
+    {
+        unsigned int total_count = 0;
+        for (Token *tok = this; tok; tok = tok->next())
+            ++total_count;
+        unsigned int count = 0;
+        for (Token *tok = this; tok; tok = tok->next())
+            tok->_progressValue = count++ * 100 / total_count;
+    }
+
 private:
     void next(Token *nextToken)
     {
@@ -375,6 +455,7 @@ private:
     bool _isBoolean;
     bool _isUnsigned;
     bool _isSigned;
+    bool _isPointerCompare;
     bool _isLong;
     bool _isUnused;
     unsigned int _varId;
@@ -383,6 +464,12 @@ private:
     Token *_link;
     unsigned int _fileIndex;
     unsigned int _linenr;
+
+    /**
+     * A value from 0-100 that provides a rough idea about where in the token
+     * list this token is located.
+     */
+    unsigned int _progressValue;
 };
 
 /// @}

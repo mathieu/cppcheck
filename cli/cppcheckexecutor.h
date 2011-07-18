@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,10 @@
 
 #include "errorlogger.h"
 #include "settings.h"
+#include <ctime>
+#include <vector>
+
+class CppCheck;
 
 /**
  * This class works as an example of how CppCheck can be used in external
@@ -66,7 +70,17 @@ public:
     /** xml output of errors */
     virtual void reportErr(const ErrorLogger::ErrorMessage &msg);
 
-    virtual void reportStatus(unsigned int index, unsigned int max);
+    void reportProgress(const std::string &filename, const char stage[], const unsigned int value);
+
+    /**
+     * Information about how many files have been checked
+     *
+     * @param fileindex This many files have been checked.
+     * @param filecount This many files there are in total.
+     * @param sizedone The sum of sizes of the files checked.
+     * @param sizetotal The total sizes of the files.
+     */
+    static void reportStatus(unsigned int fileindex, unsigned int filecount, long sizedone, long sizetotal);
 
 protected:
 
@@ -77,9 +91,41 @@ protected:
     virtual void reportErr(const std::string &errmsg);
 
     /**
+     * @brief Parse command line args and get settings and file lists
+     * from there.
+     *
+     * @param argc argc from main()
+     * @param argv argv from main()
+     * @return false when errors are found in the input
+     */
+    bool parseFromArgs(CppCheck *cppcheck, int argc, const char* const argv[]);
+
+    /**
      * check() will setup this in the beginning of check().
      */
     Settings _settings;
+
+private:
+
+    /**
+     * Report progress time
+     */
+    std::time_t time1;
+
+    /**
+     * Has --errorlist been given?
+     */
+    bool errorlist;
+
+    /**
+     * List of files to check.
+     */
+    std::vector<std::string> _filenames;
+
+    /**
+     * Sizes of files in _filenames.
+     */
+    std::map<std::string, long> _filesizes;
 };
 
 #endif // CPPCHECKEXECUTOR_H

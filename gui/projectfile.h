@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 /**
 * @brief A class that reads and writes (TODO) project files.
 * The project files contain project-specific settings for checking. For
-* example a list of automatically deallocated classes.
+* example a list of include paths.
 */
 class ProjectFile : public QObject
 {
@@ -48,10 +48,13 @@ public:
     bool Read(const QString &filename = QString());
 
     /**
-    * @brief Get list of automatically deallocated classes.
-    * @return list of classes.
+    * @brief Get project root path.
+    * @return project root path.
     */
-    QStringList GetDeAllocatedClasses() const;
+    QString GetRootPath() const
+    {
+        return mRootPath;
+    }
 
     /**
     * @brief Get list of include directories.
@@ -65,12 +68,82 @@ public:
     */
     QStringList GetDefines() const;
 
-protected:
     /**
-    * @brief Read list of automatically deallocated classes from XML.
+    * @brief Get list of paths to check.
+    * @return list of paths.
+    */
+    QStringList GetCheckPaths() const;
+
+    /**
+    * @brief Get list of paths to ignore.
+    * @return list of paths.
+    */
+    QStringList GetIgnoredPaths() const;
+
+    /**
+    * @brief Get filename for the project file.
+    * @return file name.
+    */
+    QString GetFilename()
+    {
+        return mFilename;
+    }
+
+    /**
+    * @brief Set project root path.
+    * @param rootpath new project root path.
+    */
+    void SetRootPath(const QString &rootpath)
+    {
+        mRootPath = rootpath;
+    }
+
+    /**
+    * @brief Set list of includes.
+    * @param includes List of defines.
+    */
+    void SetIncludes(const QStringList &includes);
+
+    /**
+    * @brief Set list of defines.
+    * @param defines List of defines.
+    */
+    void SetDefines(const QStringList &defines);
+
+    /**
+    * @brief Set list of paths to check.
+    * @param defines List of paths.
+    */
+    void SetCheckPaths(const QStringList &paths);
+
+    /**
+    * @brief Set list of paths to ignore.
+    * @param defines List of paths.
+    */
+    void SetIgnoredPaths(const QStringList &paths);
+
+    /**
+    * @brief Write project file (to disk).
+    * @param filename Filename to use.
+    */
+    bool Write(const QString &filename = QString());
+
+    /**
+    * @brief Set filename for the project file.
+    * @param filename Filename to use.
+    */
+    void SetFilename(const QString &filename)
+    {
+        mFilename = filename;
+    }
+
+protected:
+
+    /**
+    * @brief Read optional root path from XML.
     * @param reader XML stream reader.
     */
-    void ReadAutoAllocClasses(QXmlStreamReader &reader);
+    void ReadRootPath(QXmlStreamReader &reader);
 
     /**
     * @brief Read list of include directories from XML.
@@ -84,6 +157,18 @@ protected:
     */
     void ReadDefines(QXmlStreamReader &reader);
 
+    /**
+    * @brief Read list paths to check.
+    * @param reader XML stream reader.
+    */
+    void ReadCheckPaths(QXmlStreamReader &reader);
+
+    /**
+    * @brief Read lists of ignores.
+    * @param reader XML stream reader.
+    */
+    void ReadIgnores(QXmlStreamReader &reader);
+
 private:
 
     /**
@@ -92,9 +177,12 @@ private:
     QString mFilename;
 
     /**
-    * @brief List of automatically deallocated classes.
+    * @brief Root path (optional) for the project.
+    * This is the project root path. If it is present then all relative paths in
+    * the project file are relative to this path. Otherwise paths are relative
+    * to project file's path.
     */
-    QStringList mDeAllocatedClasses;
+    QString mRootPath;
 
     /**
     * @brief List of include directories used to search include files.
@@ -105,6 +193,16 @@ private:
     * @brief List of defines.
     */
     QStringList mDefines;
+
+    /**
+    * @brief List of paths to check.
+    */
+    QStringList mPaths;
+
+    /**
+    * @brief Paths ignored from the check.
+    */
+    QStringList mIgnoredPaths;
 };
 /// @}
 #endif  // PROJECT_FILE_H

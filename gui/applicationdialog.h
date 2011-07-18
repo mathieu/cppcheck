@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,11 @@
 
 #include <QDialog>
 #include <QLineEdit>
+#include <QString>
+#include "application.h"
 #include "ui_application.h"
+
+class QWidget;
 
 /// @addtogroup GUI
 /// @{
@@ -35,37 +39,26 @@
 class ApplicationDialog : public QDialog
 {
     Q_OBJECT
+
 public:
     /**
-    * @brief Constructor
-    *
-    * @param name Default name for the application to start
-    * @param path Path for the application
-    * @param title Title for the dialog
-    * @param parent Parent widget
+    * @brief Constructor.
+    * @param title Title for the dialog.
+    * @param app Application definition.
+    * @param parent Parent widget.
     */
-    ApplicationDialog(const QString &name,
-                      const QString &path,
-                      const QString &title,
+    ApplicationDialog(const QString &title, const Application &app,
                       QWidget *parent = 0);
     virtual ~ApplicationDialog();
 
     /**
-    * @brief Get modified name
-    * This is just a name to display the application. This has nothing to do
-    * with executing the application.
-    *
+    * @brief Get modified application
     * @return Modified name
     */
-    QString GetName();
+    Application GetApplication() const;
 
-    /**
-    * @brief Get modified path
-    * This also contains all parameters user wants to specify.
-    * @return Modified path
-    */
-    QString GetPath();
 protected slots:
+
     void Ok();
 
     /**
@@ -73,6 +66,7 @@ protected slots:
     *
     */
     void Browse();
+
 protected:
 
     /**
@@ -80,7 +74,6 @@ protected:
     *
     */
     Ui::ApplicationDialog mUI;
-private:
 };
 /// @}
 #endif // APPLICATIONDIALOG_H

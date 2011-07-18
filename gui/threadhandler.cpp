@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-#include "threadhandler.h"
+#include <QObject>
+#include <QStringList>
 #include <QDebug>
+#include "settings.h"
+#include "threadhandler.h"
+#include "resultsview.h"
 
 ThreadHandler::ThreadHandler(QObject *parent) :
     QObject(parent),
+    mScanDuration(0),
     mRunningThreadCount(0)
 {
     SetThreadCount(1);
@@ -44,7 +48,7 @@ void ThreadHandler::SetFiles(const QStringList &files)
     mLastFiles = files;
 }
 
-void ThreadHandler::Check(Settings settings, bool recheck)
+void ThreadHandler::Check(const Settings &settings, bool recheck)
 {
     if (recheck && mRunningThreadCount == 0)
     {
@@ -71,6 +75,8 @@ void ThreadHandler::Check(Settings settings, bool recheck)
     {
         mThreads[i]->Check(settings);
     }
+
+    mTime.start();
 }
 
 bool ThreadHandler::IsChecking() const
@@ -124,6 +130,8 @@ void ThreadHandler::ThreadDone()
     if (mRunningThreadCount == 0)
     {
         emit Done();
+
+        mScanDuration = mTime.elapsed();
     }
 }
 
@@ -138,22 +146,17 @@ void ThreadHandler::Stop()
 void ThreadHandler::Initialize(ResultsView *view)
 {
 
-    connect(&mResults, SIGNAL(Progress(int, int)),
-            view, SLOT(Progress(int, int)));
+    connect(&mResults, SIGNAL(Progress(int)),
+            view, SLOT(Progress(int)));
 
-    connect(&mResults, SIGNAL(Error(const QString &,
-                                    const QString &,
-                                    const QString &,
-                                    const QStringList &,
-                                    const QVariantList &,
-                                    const QString &)),
-            view, SLOT(Error(const QString &,
-                             const QString &,
-                             const QString &,
-                             const QStringList &,
-                             const QVariantList &,
-                             const QString &)));
+    connect(&mResults, SIGNAL(Error(const ErrorItem &)),
+            view, SLOT(Error(const ErrorItem &)));
 
+    connect(&mResults, SIGNAL(Log(const QString &)),
+            parent(), SLOT(Log(const QString &)));
+
+    connect(&mResults, SIGNAL(DebugError(const ErrorItem &)),
+            parent(), SLOT(DebugError(const ErrorItem &)));
 }
 
 void ThreadHandler::LoadSettings(QSettings &settings)
@@ -172,4 +175,14 @@ bool ThreadHandler::HasPreviousFiles() const
         return true;
 
     return false;
+}
+
+int ThreadHandler::GetPreviousFilesCount() const
+{
+    return mLastFiles.size();
+}
+
+int ThreadHandler::GetPreviousScanDuration() const
+{
+    return mScanDuration;
 }

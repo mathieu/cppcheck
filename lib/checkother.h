@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,12 +37,12 @@ class CheckOther : public Check
 {
 public:
     /** @brief This constructor is used when registering the CheckClass */
-    CheckOther() : Check()
+    CheckOther() : Check(myName())
     { }
 
     /** @brief This constructor is used when running checks. */
     CheckOther(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(tokenizer, settings, errorLogger)
+        : Check(myName(), tokenizer, settings, errorLogger)
     { }
 
     /** @brief Run checks against the normal token list */
@@ -50,18 +50,29 @@ public:
     {
         CheckOther checkOther(tokenizer, settings, errorLogger);
 
-        checkOther.nullPointer();
-
         // Coding style checks
         checkOther.warningOldStylePointerCast();
         checkOther.checkUnsignedDivision();
         checkOther.checkCharVariable();
         checkOther.functionVariableUsage();
-        checkOther.checkVariableScope();
         checkOther.checkStructMemberUsage();
         checkOther.strPlusChar();
         checkOther.sizeofsizeof();
-        checkOther.checkEmptyCatchBlock();
+        checkOther.sizeofCalculation();
+        checkOther.checkRedundantAssignmentInSwitch();
+        checkOther.checkAssignmentInAssert();
+        checkOther.checkSizeofForArrayParameter();
+        checkOther.checkSizeofForNumericParameter();
+        checkOther.checkSelfAssignment();
+        checkOther.checkDuplicateIf();
+        checkOther.checkDuplicateBranch();
+        checkOther.checkDuplicateExpression();
+        checkOther.checkDuplicateBreak();
+
+        // information checks
+        checkOther.checkVariableScope();
+
+        checkOther.clarifyCondition();   // not simplified because ifAssign
     }
 
     /** @brief Run checks against the simplified token list */
@@ -69,40 +80,39 @@ public:
     {
         CheckOther checkOther(tokenizer, settings, errorLogger);
 
+        checkOther.clarifyCalculation();
+
         // Coding style checks
-        checkOther.warningRedundantCode();
         checkOther.checkConstantFunctionParameter();
         checkOther.checkIncompleteStatement();
-        checkOther.checkEmptyStringTest();
-        checkOther.postIncrement();
 
         checkOther.invalidFunctionUsage();
         checkOther.checkZeroDivision();
         checkOther.checkMathFunctions();
         checkOther.checkFflushOnInputStream();
+        checkOther.invalidScanf();
 
-        checkOther.nullConstantDereference();
-
-        // New type of check: Check execution paths
-        checkOther.executionPaths();
+        checkOther.checkIncorrectLogicOperator();
+        checkOther.checkMisusedScopedObject();
+        checkOther.checkCatchExceptionByValue();
+        checkOther.checkMemsetZeroBytes();
+        checkOther.checkIncorrectStringCompare();
+        checkOther.checkIncrementBoolean();
+        checkOther.checkComparisonOfBoolWithInt();
+        checkOther.checkSwitchCaseFallThrough();
+        checkOther.checkAlwaysTrueOrFalseStringCompare();
     }
 
+    /** @brief Clarify calculation for ".. a * b ? .." */
+    void clarifyCalculation();
+    void clarifyCalculationError(const Token *tok, const std::string &op);
 
-    /**
-     * @brief Uninitialized variables: analyse functions to see how they work with uninitialized variables
-     * @param tokens [in] the token list
-     * @param func [out] names of functions that don't handle uninitialized variables well. the function names are added to the set. No clearing is made.
-     */
-    void analyse(const Token * tokens, std::set<std::string> &func) const;
-
-    /** Save analysis results */
-    void saveAnalysisData(const std::set<std::string> &data) const;
+    /** @brief Suspicious condition (assignment+comparison) */
+    void clarifyCondition();
+    void clarifyConditionError(const Token *tok);
 
     /** @brief Are there C-style pointer casts in a c++ file? */
     void warningOldStylePointerCast();
-
-    /** @brief Redundant code: if (p) delete p; */
-    void warningRedundantCode();
 
     /**
      * @brief Invalid function usage (invalid radix / overlapping data)
@@ -119,6 +129,7 @@ public:
     /** @brief %Check for unused function variables */
     void functionVariableUsage();
     void unusedVariableError(const Token *tok, const std::string &varname);
+    void allocatedButUnusedVariableError(const Token *tok, const std::string &varname);
     void unreadVariableError(const Token *tok, const std::string &varname);
     void unassignedVariableError(const Token *tok, const std::string &varname);
 
@@ -140,48 +151,89 @@ public:
     /** @brief str plus char (unusual pointer arithmetic) */
     void strPlusChar();
 
-    /** @brief possible null pointer dereference */
-    void nullPointer();
-
-    /** @brief dereferencing null constant (after Tokenizer::simplifyKnownVariables) */
-    void nullConstantDereference();
-
-    /** @brief new type of check: check execution paths */
-    void executionPaths();
-
     /** @brief %Check zero division*/
     void checkZeroDivision();
 
     /** @brief %Check for parameters given to math function that do not make sense*/
     void checkMathFunctions();
 
-    /** @brief %Check for post increment/decrement in for loop*/
-    void postIncrement();
-
     void lookupVar(const Token *tok1, const std::string &varname);
-
-    // Redundant condition
-    // if (haystack.find(needle) != haystack.end())
-    //    haystack.remove(needle);
-    void redundantCondition2();
-
-    /** @brief %Check for inefficient empty string test*/
-    void checkEmptyStringTest();
 
     /** @brief %Check for using fflush() on an input stream*/
     void checkFflushOnInputStream();
-
-    /** @brief %Check for empty catch() blocks*/
-    void checkEmptyCatchBlock();
 
     /** @brief %Check for 'sizeof sizeof ..' */
     void sizeofsizeof();
     void sizeofsizeofError(const Token *tok);
 
+    /** @brief %Check for calculations inside sizeof */
+    void sizeofCalculation();
+    void sizeofCalculationError(const Token *tok);
+
+    /** @brief scanf can crash if width specifiers are not used */
+    void invalidScanf();
+    void invalidScanfError(const Token *tok);
+
+    /** @brief %Check for assigning to the same variable twice in a switch statement*/
+    void checkRedundantAssignmentInSwitch();
+
+    /** @brief %Check for switch case fall through without comment */
+    void checkSwitchCaseFallThrough();
+
+    /** @brief %Check for assigning a variable to itself*/
+    void checkSelfAssignment();
+
+    /** @brief %Check for assignment to a variable in an assert test*/
+    void checkAssignmentInAssert();
+
+    /** @brief %Check for testing for mutual exclusion over ||*/
+    void checkIncorrectLogicOperator();
+
+    /** @brief %Check for objects that are destroyed immediately */
+    void checkMisusedScopedObject();
+
+    /** @brief %Check for exceptions that are caught by value instead of by reference */
+    void checkCatchExceptionByValue();
+
+    /** @brief %Check for filling zero bytes with memset() */
+    void checkMemsetZeroBytes();
+
+    /** @brief %Check for using sizeof with array given as function argument */
+    void checkSizeofForArrayParameter();
+
+    /** @brief %Check for using sizeof with numeric given as function argument */
+    void checkSizeofForNumericParameter();
+
+    /** @brief %Check for using bad usage of strncmp and substr */
+    void checkIncorrectStringCompare();
+
+    /** @brief %Check for using postfix increment on bool */
+    void checkIncrementBoolean();
+
+    /** @brief %Check for suspicious comparison of a bool and a non-zero (and non-one) value (e.g. "if (!x==4)") */
+    void checkComparisonOfBoolWithInt();
+
+    /** @brief %Check for suspicious code where multiple if have the same expression (e.g "if (a) { } else if (a) { }") */
+    void checkDuplicateIf();
+
+    /** @brief %Check for suspicious code where if and else branch are the same (e.g "if (a) b = true; else b = true;") */
+    void checkDuplicateBranch();
+
+    /** @brief %Check for suspicious code with the same expression on both sides of operator (e.g "if (a && a)") */
+    void checkDuplicateExpression();
+
+    /** @brief %Check for suspicious code that compares string literals for equality */
+    void checkAlwaysTrueOrFalseStringCompare();
+
+    /** @brief %Check for duplicate break statements in a switch or loop */
+    void checkDuplicateBreak();
+
+    /** @brief check if token is a record type without side effects */
+    bool isRecordTypeWithoutSideEffects(const Token *tok);
+
+
     // Error messages..
     void cstyleCastError(const Token *tok);
-    void redundantIfDelete0Error(const Token *tok);
-    void redundantIfRemoveError(const Token *tok);
     void dangerousUsageStrtolError(const Token *tok);
     void sprintfOverlappingDataError(const Token *tok, const std::string &varname);
     void udivError(const Token *tok);
@@ -193,54 +245,80 @@ public:
     void variableScopeError(const Token *tok, const std::string &varname);
     void conditionAlwaysTrueFalse(const Token *tok, const std::string &truefalse);
     void strPlusChar(const Token *tok);
-    void nullPointerError(const Token *tok);  // variable name unknown / doesn't exist
-    void nullPointerError(const Token *tok, const std::string &varname);
-    void nullPointerError(const Token *tok, const std::string &varname, const int line);
-    void uninitstringError(const Token *tok, const std::string &varname);
-    void uninitdataError(const Token *tok, const std::string &varname);
-    void uninitvarError(const Token *tok, const std::string &varname);
     void zerodivError(const Token *tok);
     void mathfunctionCallError(const Token *tok, const unsigned int numParam = 1);
-    void postIncrementError(const Token *tok, const std::string &var_name, const bool isIncrement);
-    void emptyStringTestError(const Token *tok, const std::string &var_name, const bool isTestForEmpty);
     void fflushOnInputStreamError(const Token *tok, const std::string &varname);
-    void emptyCatchBlockError(const Token *tok);
+    void redundantAssignmentInSwitchError(const Token *tok, const std::string &varname);
+    void switchCaseFallThrough(const Token *tok);
+    void selfAssignmentError(const Token *tok, const std::string &varname);
+    void assignmentInAssertError(const Token *tok, const std::string &varname);
+    void incorrectLogicOperatorError(const Token *tok, bool always);
+    void misusedScopeObjectError(const Token *tok, const std::string &varname);
+    void catchExceptionByValueError(const Token *tok);
+    void memsetZeroBytesError(const Token *tok, const std::string &varname);
+    void sizeofForArrayParameterError(const Token *tok);
+    void sizeofForNumericParameterError(const Token *tok);
+    void incorrectStringCompareError(const Token *tok, const std::string& func, const std::string &string, const std::string &len);
+    void incrementBooleanError(const Token *tok);
+    void comparisonOfBoolWithIntError(const Token *tok, const std::string &varname);
+    void duplicateIfError(const Token *tok1, const Token *tok2);
+    void duplicateBranchError(const Token *tok1, const Token *tok2);
+    void duplicateExpressionError(const Token *tok1, const Token *tok2, const std::string &op);
+    void alwaysTrueFalseStringCompare(const Token *tok, const std::string& str1, const std::string& str2);
+    void duplicateBreakError(const Token *tok);
 
-    void getErrorMessages()
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings)
     {
+        CheckOther c(0, settings, errorLogger);
+
         // error
-        sprintfOverlappingDataError(0, "varname");
-        udivError(0);
-        nullPointerError(0, "pointer");
-        uninitstringError(0, "varname");
-        uninitdataError(0, "varname");
-        uninitvarError(0, "varname");
-        zerodivError(0);
-        mathfunctionCallError(0);
-        fflushOnInputStreamError(0, "stdin");
+        c.sprintfOverlappingDataError(0, "varname");
+        c.udivError(0);
+        c.zerodivError(0);
+        c.mathfunctionCallError(0);
+        c.fflushOnInputStreamError(0, "stdin");
+        c.misusedScopeObjectError(NULL, "varname");
+        c.sizeofForArrayParameterError(0);
+        c.sizeofForNumericParameterError(0);
 
-        // style
-        cstyleCastError(0);
-        redundantIfDelete0Error(0);
-        redundantIfRemoveError(0);
-        dangerousUsageStrtolError(0);
-        unusedStructMemberError(0, "structname", "variable");
-        passedByValueError(0, "parametername");
-        constStatementError(0, "type");
-        charArrayIndexError(0);
-        charBitOpError(0);
-        variableScopeError(0, "varname");
-        conditionAlwaysTrueFalse(0, "true/false");
-        strPlusChar(0);
-        sizeofsizeofError(0);
-        emptyCatchBlockError(0);
-
-        // optimisations
-        postIncrementError(0, "varname", true);
-        emptyStringTestError(0, "varname", true);
+        // style/warning
+        c.cstyleCastError(0);
+        c.dangerousUsageStrtolError(0);
+        c.unusedStructMemberError(0, "structname", "variable");
+        c.passedByValueError(0, "parametername");
+        c.constStatementError(0, "type");
+        c.charArrayIndexError(0);
+        c.charBitOpError(0);
+        c.variableScopeError(0, "varname");
+        c.conditionAlwaysTrueFalse(0, "true/false");
+        c.strPlusChar(0);
+        c.sizeofsizeofError(0);
+        c.sizeofCalculationError(0);
+        c.redundantAssignmentInSwitchError(0, "varname");
+        c.switchCaseFallThrough(0);
+        c.selfAssignmentError(0, "varname");
+        c.assignmentInAssertError(0, "varname");
+        c.invalidScanfError(0);
+        c.incorrectLogicOperatorError(0, true);
+        c.unusedVariableError(0, "varname");
+        c.allocatedButUnusedVariableError(0, "varname");
+        c.unreadVariableError(0, "varname");
+        c.unassignedVariableError(0, "varname");
+        c.catchExceptionByValueError(0);
+        c.memsetZeroBytesError(0, "varname");
+        c.clarifyCalculationError(0, "+");
+        c.clarifyConditionError(0);
+        c.incorrectStringCompareError(0, "substr", "\"Hello World\"", "12");
+        c.incrementBooleanError(0);
+        c.comparisonOfBoolWithIntError(0, "varname");
+        c.duplicateIfError(0, 0);
+        c.duplicateBranchError(0, 0);
+        c.duplicateExpressionError(0, 0, "&&");
+        c.alwaysTrueFalseStringCompare(0, "str1", "str2");
+        c.duplicateBreakError(0);
     }
 
-    std::string name() const
+    std::string myName() const
     {
         return "Other";
     }
@@ -252,15 +330,19 @@ public:
                // error
                "* [[OverlappingData|bad usage of the function 'sprintf' (overlapping data)]]\n"
                "* division with zero\n"
-               "* null pointer dereferencing\n"
-               "* using uninitialized variables and data\n"
                "* using fflush() on an input stream\n"
+               "* scoped object destroyed immediately after construction\n"
+               "* assignment in an assert statement\n"
+               "* sizeof for array given as function argument\n"
+               "* sizeof for numeric given as function argument\n"
+               "* incorrect length arguments for 'substr' and 'strncmp'\n"
 
                // style
                "* C-style pointer cast in cpp file\n"
                "* redundant if\n"
                "* bad usage of the function 'strtol'\n"
                "* [[CheckUnsignedDivision|unsigned division]]\n"
+               "* Dangerous usage of 'scanf'\n"
                "* unused struct member\n"
                "* passing parameter by value\n"
                "* [[IncompleteStatement|Incomplete statement]]\n"
@@ -268,46 +350,24 @@ public:
                "* variable scope can be limited\n"
                "* condition that is always true/false\n"
                "* unusal pointer arithmetic. For example: \"abc\" + 'd'\n"
-               "* empty catch() block\n"
+               "* redundant assignment in a switch statement\n"
+               "* look for 'sizeof sizeof ..'\n"
+               "* look for calculations inside sizeof()\n"
+               "* assignment of a variable to itself\n"
+               "* mutual exclusion over || always evaluating to true\n"
+               "* exception caught by value instead of by reference\n"
+               "* Clarify calculation with parentheses\n"
+               "* using increment on boolean\n"
+               "* comparison of a boolean with a non-zero integer\n"
+               "* suspicious condition (assignment+comparison)\n"
+               "* suspicious condition (runtime comparison of string literals)\n"
+               "* duplicate break statement\n"
 
                // optimisations
-               "* optimisation: detect post increment/decrement\n"
-               "* optimisation: simplify empty string tests\n";
+               "* optimisation: detect post increment/decrement\n";
     }
 
 private:
-
-    /**
-     * @brief Does one part of the check for nullPointer().
-     * Locate insufficient null-pointer handling after loop
-     */
-    void nullPointerAfterLoop();
-
-    /**
-     * @brief Does one part of the check for nullPointer().
-     * looping through items in a linked list in a inner loop..
-     */
-    void nullPointerLinkedList();
-
-    /**
-     * @brief Does one part of the check for nullPointer().
-     * Dereferencing a struct pointer and then checking if it's NULL..
-     */
-    void nullPointerStructByDeRefAndChec();
-
-    /**
-     * @brief Does one part of the check for nullPointer().
-     * Dereferencing a pointer and then checking if it's NULL..
-     */
-    void nullPointerByDeRefAndChec();
-
-    /**
-     * @brief Does one part of the check for nullPointer().
-     * -# initialize pointer to 0
-     * -# conditionally assign pointer
-     * -# dereference pointer
-     */
-    void nullPointerConditionalAssignment();
 
     /**
      * @brief Used in warningRedundantCode()

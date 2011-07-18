@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-"/usr/share/xml/docbook/schema/dtd/4.4/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!ENTITY writing-rules-1 SYSTEM "writing-rules-1.docbook">
+<!ENTITY writing-rules-2 SYSTEM "writing-rules-2.docbook">
+<!ENTITY writing-rules-3 SYSTEM "writing-rules-3.docbook">
+<!ENTITY cppcheck-design SYSTEM "cppcheck-design.docbook">
+]>
 <book>
   <bookinfo>
-    <title>Cppcheck 1.43</title>
+    <title>Cppcheck 1.49</title>
 
-    <date>2010-05-08</date>
+    <date>2011-02-06</date>
   </bookinfo>
 
   <chapter>
@@ -30,7 +35,7 @@
       </listitem>
 
       <listitem>
-        <para>Cppcheck should work on any platform that has sufficient cpu and
+        <para>Cppcheck should work on any platform that has sufficient CPU and
         memory.</para>
       </listitem>
     </itemizedlist>
@@ -77,12 +82,12 @@
     <section>
       <title>Checking all files in a folder</title>
 
-      <para>Normally a program has many sourcefiles. And you want to check
-      them all. Cppcheck can check all sourcefiles in a directory:</para>
+      <para>Normally a program has many source files. And you want to check
+      them all. Cppcheck can check all source files in a directory:</para>
 
       <programlisting>cppcheck path</programlisting>
 
-      <para>If "path" is a folder then cppcheck will check all sourcefiles in
+      <para>If "path" is a folder then cppcheck will check all source files in
       this folder.</para>
 
       <programlisting>Checking path/file1.cpp...
@@ -92,14 +97,99 @@ Checking path/file2.cpp...
     </section>
 
     <section>
-      <title>Stylistic issues</title>
+      <title>Excluding a file or folder from checking</title>
 
-      <para>By default Cppcheck will only check for bugs. There are also a few
-      checks for stylistic issues.</para>
+      <para>To exclude a file or folder, there are two options.</para>
 
-      <para>Here is a simple code example:</para>
+      <para>The first option is to only provide the paths and files you want
+      to check.</para>
 
-      <programlisting>void f(int x)
+      <programlisting>cppcheck src/a src/b</programlisting>
+
+      <para>All files under <filename class="directory">src/a</filename> and
+      <filename class="directory">src/b</filename> are then checked.</para>
+
+      <para>The second option is to use <parameter class="command">-i</parameter>,
+      with it you specify files/paths to ignore. With this command no files in
+      <filename class="directory">src/c</filename> are checked:</para>
+
+      <programlisting>cppcheck -isrc/c src</programlisting>
+    </section>
+
+    <section>
+      <title>Severities</title>
+
+      <para>The possible severities for messages are:</para>
+
+      <variablelist>
+        <varlistentry>
+          <term>error</term>
+
+          <listitem>
+            <para>used when bugs are found</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>warning</term>
+
+          <listitem>
+            <para>suggestions about defensive programming to prevent
+            bugs</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>style</term>
+
+          <listitem>
+            <para>stylistic issues related to code cleanup (unused functions,
+            redundant code, constness, and such)</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>performance</term>
+
+          <listitem>
+            <para>suggestions for making the code faster</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>information</term>
+
+          <listitem>
+            <para>Informational messages that might be interesting. Ignore
+            these messages unless you really agree.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <remark>The performance messages are based on 'common knowledge'. It is
+      not certain that fixing performance messages will make any measurable
+      difference in speed. Fixing performance messages generally doesn't make
+      your code more readable.</remark>
+    </section>
+
+    <section>
+      <title>Enable messages</title>
+
+      <para>By default only <parameter class="command">error</parameter> messages
+      are shown. Through the <parameter class="command">--enable</parameter>
+      command more checks can be enabled.</para>
+
+      <section>
+        <title>Stylistic issues</title>
+
+        <para>With <parameter class="command">--enable=style</parameter> you
+        enable most <parameter class="command">warning</parameter>,
+        <parameter class="command">style</parameter> and
+        <parameter class="command">performance</parameter> messages.</para>
+
+        <para>Here is a simple code example:</para>
+
+        <programlisting>void f(int x)
 {
     int i;
     if (x == 0)
@@ -108,13 +198,37 @@ Checking path/file2.cpp...
     }
 }</programlisting>
 
-      <para>To enable stylistic checks, use the --style flag:</para>
+        <para>There are no bugs in that code so Cppcheck won't report anything
+        by default. To enable the stylistic messages, use the
+        <parameter class="command">--enable=style</parameter> command:</para>
 
-      <programlisting>cppcheck --enable=style file1.c</programlisting>
+        <programlisting>cppcheck --enable=style file3.c</programlisting>
 
-      <para>The reported error is:</para>
+        <para>The output from Cppcheck is now:</para>
 
-      <programlisting>[file3.c:3]: (style) The scope of the variable i can be limited</programlisting>
+        <programlisting>Checking file3.c...
+[file3.c:3]: (style) Variable 'i' is assigned a value that is never used
+[file3.c:3]: (style) The scope of the variable i can be reduced</programlisting>
+      </section>
+
+      <section>
+        <title>Unused functions</title>
+
+        <para>This check will try to find unused functions. It is best to use
+        this when the whole program is checked, so that all usages is seen by
+        cppcheck.</para>
+
+        <programlisting>cppcheck --enable=unusedFunction path</programlisting>
+      </section>
+
+      <section>
+        <title>Enable all checks</title>
+
+        <para>To enable all checks your can use the
+        <parameter class="command">--enable=all</parameter> flag:</para>
+
+        <programlisting>cppcheck --enable=all path</programlisting>
+      </section>
     </section>
 
     <section>
@@ -128,25 +242,6 @@ Checking path/file2.cpp...
     </section>
 
     <section>
-      <title>Unused functions</title>
-
-      <para>This check will try to find unused functions. It is best to use
-      this when the whole program is checked, so that all usages is seen by
-      cppcheck.</para>
-
-      <programlisting>cppcheck --enable=unusedFunctions path</programlisting>
-    </section>
-
-    <section>
-      <title>Enable all checks</title>
-
-      <para>To enable all checks your can use the
-      <literal>--enable=all</literal> flag:</para>
-
-      <programlisting>cppcheck --enable=all path</programlisting>
-    </section>
-
-    <section>
       <title>Multithreaded checking</title>
 
       <para>To use 4 threads to check the files in a folder:</para>
@@ -155,7 +250,7 @@ Checking path/file2.cpp...
     </section>
   </chapter>
 
-  <chapter>
+  <chapter id="preprocessor-configurations">
     <title>Preprocessor configurations</title>
 
     <para>By default Cppcheck will check all preprocessor configurations
@@ -163,11 +258,16 @@ Checking path/file2.cpp...
     behaviour.</para>
 
     <para>But if you want to manually limit the checking you can do so with
-    <literal>-D</literal>.</para>
+    <parameter class="command">-D</parameter>.</para>
 
-    <para>For example, if you want to limit the checking so the only
-    configuration to check should be "DEBUG=1;__cplusplus" then something like
-    this can be used:</para>
+    <para>Beware that only the macros, which are given here and the macros
+    defined in source files and known header files are considered. That
+    excludes all the macros defined in some system header files, which are by
+    default not examined by Cppcheck.</para>
+
+    <para>The usage: if you, for example, want to limit the checking so the
+    only configuration to check should be <literal>DEBUG=1;__cplusplus</literal>
+    then something like this can be used:</para>
 
     <programlisting>cppcheck -DDEBUG=1 -D__cplusplus path</programlisting>
   </chapter>
@@ -177,11 +277,12 @@ Checking path/file2.cpp...
 
     <para>Cppcheck can generate the output in XML format.</para>
 
-    <para>Use the --xml flag when you execute cppcheck:</para>
+    <para>Use the <parameter class="command">--xml</parameter> flag when you
+    execute cppcheck:</para>
 
     <programlisting>cppcheck --xml file1.cpp</programlisting>
 
-    <para>The xml format is:</para>
+    <para>The XML format is:</para>
 
     <programlisting>&lt;?xml version="1.0"?&gt;
 &lt;results&gt;
@@ -193,7 +294,7 @@ Checking path/file2.cpp...
 
     <variablelist>
       <varlistentry>
-        <term>file</term>
+        <term><sgmltag class="attribute">file</sgmltag></term>
 
         <listitem>
           <para>filename. Both relative and absolute paths are possible</para>
@@ -201,7 +302,7 @@ Checking path/file2.cpp...
       </varlistentry>
 
       <varlistentry>
-        <term>line</term>
+        <term><sgmltag class="attribute">line</sgmltag></term>
 
         <listitem>
           <para>a number</para>
@@ -209,7 +310,7 @@ Checking path/file2.cpp...
       </varlistentry>
 
       <varlistentry>
-        <term>id</term>
+        <term><sgmltag class="attribute">id</sgmltag></term>
 
         <listitem>
           <para>id of error. These are always valid symbolnames.</para>
@@ -217,15 +318,18 @@ Checking path/file2.cpp...
       </varlistentry>
 
       <varlistentry>
-        <term>severity</term>
+        <term><sgmltag class="attribute">severity</sgmltag></term>
 
         <listitem>
-          <para>one of: error / possible error / style / possible style</para>
+          <para>either <sgmltag class="attvalue">error</sgmltag> or
+          <sgmltag class="attvalue">style</sgmltag>.</para>
+          <para><literal>warning</literal> and <literal>performance</literal>
+          are saved as <sgmltag class="attvalue">style</sgmltag>.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>msg</term>
+        <term><sgmltag class="attribute">msg</sgmltag></term>
 
         <listitem>
           <para>the error message</para>
@@ -240,8 +344,8 @@ Checking path/file2.cpp...
     <para>If you want to reformat the output so it looks different you can use
     templates.</para>
 
-    <para>To get Visual Studio compatible output you can use "--template
-    vs":</para>
+    <para>To get Visual Studio compatible output you can use
+    <parameter class="command">--template vs</parameter>:</para>
 
     <programlisting>cppcheck --template vs gui/test.cpp</programlisting>
 
@@ -251,7 +355,8 @@ Checking path/file2.cpp...
 gui/test.cpp(31): error: Memory leak: b
 gui/test.cpp(16): error: Mismatching allocation and deallocation: k</programlisting>
 
-    <para>To get gcc compatible output you can use "--template gcc":</para>
+    <para>To get gcc compatible output you can use
+    <parameter class="command">--template gcc</parameter>:</para>
 
     <programlisting>cppcheck --template gcc gui/test.cpp</programlisting>
 
@@ -271,24 +376,34 @@ gui/test.cpp:16: error: Mismatching allocation and deallocation: k</programlisti
     <programlisting>Checking gui/test.cpp...
 gui/test.cpp,31,error,memleak,Memory leak: b
 gui/test.cpp,16,error,mismatchAllocDealloc,Mismatching allocation and deallocation: k</programlisting>
-
-    <para></para>
   </chapter>
 
   <chapter>
     <title>Suppressions</title>
 
     <para>If you want to filter out certain errors you can suppress these.
-    First you need to create a suppressions file. The format is:</para>
+    The <parameter class="command">--suppress=</parameter> command line option
+    is used to specify suppressions on the command line.
+    The format is one of:</para>
 
-    <programlisting>[error id]:[filename]
+    <programlisting>[error id]:[filename]:[line]
 [error id]:[filename2]
 [error id]</programlisting>
 
-    <para>The <literal>error id</literal> is the id that you want to suppress.
-    The easiest way to get it is to use the <literal>--xml</literal> command
-    line flag. Copy and paste the <literal>id</literal> string from the xml
-    output.</para>
+    <para>The <replaceable>error id</replaceable> is the id that you want to suppress.
+    The easiest way to get it is to use the <parameter class="command">--xml</parameter>
+    command line flag. Copy and paste the <replaceable>id</replaceable> string from the XML
+    output. This may be <literal>*</literal> to suppress all warnings (for a
+    specified file or files).</para>
+
+    <para>The <replaceable>filename</replaceable> may include the wildcard characters
+    <literal>*</literal> or <literal>?</literal>, which match any sequence of
+    characters or any single character respectively.</para>
+
+    <programlisting>cppcheck --suppress=memleak:file1.cpp src/</programlisting>
+
+    <para>If you have more than a couple of suppressions, create a suppressions
+    file with one line per suppression as above.</para>
 
     <para>Here is an example:</para>
 
@@ -299,8 +414,6 @@ uninitvar</programlisting>
     <para>You can then use the suppressions file:</para>
 
     <programlisting>cppcheck --suppressions suppressions.txt src/</programlisting>
-
-    <para></para>
   </chapter>
 
   <chapter>
@@ -311,20 +424,20 @@ uninitvar</programlisting>
     some tweaking you can improve the checking.</para>
 
     <section>
-      <title>Userdefined allocation/deallocation functions</title>
+      <title>User-defined allocation/deallocation functions</title>
 
-      <para><literal>Cppcheck</literal> understands many common allocation and
+      <para>Cppcheck understands many common allocation and
       deallocation functions. But not all.</para>
 
       <para>Here is example code that might leak memory or resources:</para>
 
-      <para><programlisting>void foo(int x)
+      <programlisting>void foo(int x)
 {
     void *f = CreateFred();
     if (x == 1)
         return;
     DestroyFred(f);
-}</programlisting></para>
+}</programlisting>
 
       <para>If you analyse that with Cppcheck it won't find any leaks:</para>
 
@@ -344,14 +457,15 @@ void DestroyFred(void *p)
     free(p);
 }</programlisting>
 
-      <para>When Cppcheck see this it understands that CreateFred will return
-      allocated memory and that DestroyFred will deallocate memory.</para>
+      <para>When Cppcheck see this it understands that <function>CreateFred()
+      </function> will return allocated memory and that <function>DestroyFred()
+      </function> will deallocate memory.</para>
 
-      <para>Now, execute <literal>Cppcheck</literal> this way:</para>
+      <para>Now, execute <command>cppcheck</command> this way:</para>
 
       <programlisting>cppcheck --append=fred.cpp fred1.cpp</programlisting>
 
-      <para>The output from cppcheck is:</para>
+      <para>The output from <command>cppcheck</command> is:</para>
 
       <programlisting>Checking fred1.cpp...
 [fred1.cpp:5]: (error) Memory leak: f</programlisting>
@@ -371,11 +485,11 @@ void DestroyFred(void *p)
 {
 }</programlisting>
 
-    <para>By default cppcheck will not detect any problems in that
+    <para>By default Cppcheck will not detect any problems in that
     code.</para>
 
     <para>To enable the exception safety checking you can use
-    <literal>--enable</literal>:</para>
+    <parameter class="command">--enable</parameter>:</para>
 
     <programlisting>cppcheck --enable=exceptNew --enable=exceptRealloc fred.cpp</programlisting>
 
@@ -383,8 +497,8 @@ void DestroyFred(void *p)
 
     <programlisting>[fred.cpp:3]: (style) Upon exception there is memory leak: a</programlisting>
 
-    <para>If an exception occurs when <literal>b</literal> is allocated,
-    <literal>a</literal> will leak.</para>
+    <para>If an exception occurs when <varname>b</varname> is allocated,
+    <varname>a</varname> will leak.</para>
 
     <para>Here is another example:</para>
 
@@ -408,21 +522,22 @@ int a(int sz)
   </chapter>
 
   <chapter>
-    <title>html report</title>
+    <title>HTML report</title>
 
-    <para>You can convert the xml output from cppcheck into a html report.
-    You'll need python and the pygments module
-    (<uri>http://pygments.org/</uri>) for this to work. In the Cppcheck source
-    tree there is a folder "htmlreport" that contains a script that transforms
-    a Cppcheck xml file into html output.</para>
+    <para>You can convert the XML output from cppcheck into a HTML report.
+    You'll need Python and the pygments module
+    (<ulink url="http://pygments.org/">http://pygments.org/</ulink>) for this to
+    work. In the Cppcheck source tree there is a folder
+    <filename class="directory">htmlreport</filename> that contains a script
+    that transforms a Cppcheck XML file into HTML output.</para>
 
     <para>This command generates the help screen:</para>
 
-    <para><programlisting>htmlreport/cppcheck-htmlreport -h</programlisting></para>
+    <programlisting>htmlreport/cppcheck-htmlreport -h</programlisting>
 
     <para>The output screen says:</para>
 
-    <para><programlisting>Usage: cppcheck-htmlreport [options]
+    <programlisting>Usage: cppcheck-htmlreport [options]
 
 Options:
   -h, --help      show this help message and exit 
@@ -431,13 +546,99 @@ Options:
   --report-dir=REPORT_DIR 
                   The directory where the html report content is written.
   --source-dir=SOURCE_DIR
-                  Base directory where source code files can be found.</programlisting></para>
+                  Base directory where source code files can be found.</programlisting>
 
     <para>An example usage:</para>
 
     <programlisting>./cppcheck gui/test.cpp --xml 2&gt; err.xml
 htmlreport/cppcheck-htmlreport --file=err.xml --report-dir=test1 --source-dir=.</programlisting>
-
-    <para></para>
   </chapter>
+
+  <chapter>
+    <title>Graphical user interface</title>
+
+    <section>
+      <title>Introduction</title>
+
+      <para>A Cppcheck GUI is available.</para>
+
+      <para>The main screen is shown immediately when the GUI is
+      started.</para>
+    </section>
+
+    <section>
+      <title>Check source code</title>
+
+      <para>Use the <guimenu>Check</guimenu> menu.</para>
+    </section>
+
+    <section>
+      <title>Inspecting results</title>
+
+      <para>The results are shown in a list.</para>
+
+      <para>You can show/hide certain types of messages through the
+      <guimenu>View</guimenu> menu.</para>
+
+      <para>Results can be saved to an XML file that can later be opened. See
+      <literal>Save results to file</literal> and <literal>Open
+      XML</literal>.</para>
+    </section>
+
+    <section>
+      <title>Settings</title>
+
+      <para>The language can be changed at any time by using the
+      <guimenu>Language</guimenu> menu.</para>
+
+      <para>More settings are available in
+      <menuchoice><guimenu>Edit</guimenu><guimenuitem>Preferences</guimenuitem>
+      </menuchoice>.</para>
+    </section>
+
+    <section>
+      <title>Project files</title>
+
+      <para>The project files are used to store project specific settings.
+      These settings are:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>include folders</para>
+        </listitem>
+
+        <listitem>
+          <para>preprocessor defines</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>It isn't recommended to provide the paths to the standard C/C++
+      headers - Cppcheck has internal knowledge about ANSI C/C++ and it isn't
+      recommended that this known functionality is redefined. But feel free to
+      try it.</para>
+
+      <para>As you can read in <link linkend="preprocessor-configurations">chapter
+      3</link> in this manual the default is that Cppcheck checks all configurations.
+      So only provide preprocessor defines if you want to limit the checking.</para>
+    </section>
+  </chapter>
+  
+  <appendix>
+    <info>
+      <author>
+        <firstname>Daniel</firstname>
+        <surname>Marjamäki</surname>
+        <affiliation>
+          <orgname>Cppcheck</orgname>
+        </affiliation>
+      </author>
+      <pubdate>2010-2011</pubdate>
+    </info>
+    <title>Writing Cppcheck rules</title>
+    &writing-rules-1;
+    &writing-rules-2;
+    &writing-rules-3;
+  </appendix>
+
+  &cppcheck-design;
 </book>

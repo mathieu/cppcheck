@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 
 #include "check.h"
 #include "settings.h"
+#include "mathlib.h"
 #include <list>
 #include <vector>
 #include <string>
@@ -31,6 +32,7 @@
 class ErrorLogger;
 class Token;
 class Tokenizer;
+class Variable;
 
 /// @addtogroup Checks
 /// @{
@@ -49,12 +51,12 @@ class CheckBufferOverrun : public Check
 public:
 
     /** This constructor is used when registering the CheckClass */
-    CheckBufferOverrun() : Check()
+    CheckBufferOverrun() : Check(myName())
     { }
 
     /** This constructor is used when running checks. */
     CheckBufferOverrun(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(tokenizer, settings, errorLogger)
+        : Check(myName(), tokenizer, settings, errorLogger)
     { }
 
     void runSimplifiedChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
@@ -79,7 +81,7 @@ public:
      * @param parameters given parameters to sprintf
      * @return minimum length of resulting string
      */
-    static int countSprintfLength(const std::string &input_string, const std::list<const Token*> &parameters);
+    static MathLib::bigint countSprintfLength(const std::string &input_string, const std::list<const Token*> &parameters);
 
     /**
      * @brief %Check code that matches: "sprintf ( %varid% , %str% [,)]" when varid is not 0,
@@ -87,7 +89,7 @@ public:
      * @param tok The "sprintf" token.
      * @param size The size of the buffer where sprintf is writing.
      */
-    void checkSprintfCall(const Token *tok, int size);
+    void checkSprintfCall(const Token *tok, const MathLib::bigint size);
 
     /** Check for buffer overruns - locate struct variables and check them with the .._CheckScope function */
     void checkStructVariable();
@@ -105,17 +107,17 @@ public:
     void negativeIndex();
 
     /** Check for buffer overruns */
-    void checkScope(const Token *tok, const std::vector<std::string> &varname, const int size, const int total_size, unsigned int varid);
+    void checkScope(const Token *tok, const std::vector<std::string> &varname, const MathLib::bigint size, const MathLib::bigint total_size, unsigned int varid);
 
     /** Information about N-dimensional array */
     class ArrayInfo
     {
     private:
         /** number of elements of array */
-        std::vector<unsigned int> _num;
+        std::vector<MathLib::bigint> _num;
 
         /** size of each element in array */
-        unsigned int _element_size;
+        MathLib::bigint _element_size;
 
         /** variable id */
         unsigned int _varid;
@@ -126,7 +128,8 @@ public:
     public:
         ArrayInfo();
         ArrayInfo(const ArrayInfo &);
-        const ArrayInfo & operator=(const ArrayInfo &ai);
+        ArrayInfo(const Variable *var, const Tokenizer *tokenizer);
+        ArrayInfo & operator=(const ArrayInfo &ai);
 
         /**
          * Create array info with specified data
@@ -134,10 +137,10 @@ public:
          * checking should be based on ArrayInfo from the start and then
          * this will not be needed as the declare can be used instead.
          */
-        ArrayInfo(unsigned int id, const std::string &name, unsigned int size1, unsigned int n);
+        ArrayInfo(unsigned int id, const std::string &name, MathLib::bigint size1, MathLib::bigint n);
 
         /** Create a copy ArrayInfo where the number of elements have been limited by a value */
-        ArrayInfo limit(long value) const;
+        ArrayInfo limit(MathLib::bigint value) const;
 
         /**
          * Declare array - set info
@@ -147,57 +150,88 @@ public:
          */
         bool declare(const Token *tok, const Tokenizer &tokenizer);
 
+        /** array sizes */
+        const std::vector<MathLib::bigint> &num() const
+        {
+            return _num;
+        }
+
         /** array size */
-        const std::vector<unsigned int> &num;
+        MathLib::bigint num(size_t index) const
+        {
+            return _num[index];
+        }
 
         /** size of each element */
-        const unsigned int &element_size;
+        MathLib::bigint element_size() const
+        {
+            return _element_size;
+        }
 
         /** Variable name */
-        const unsigned int &varid;
+        unsigned int varid() const
+        {
+            return _varid;
+        }
 
         /** Variable name */
-        const std::string &varname;
+        const std::string &varname() const
+        {
+            return _varname;
+        }
     };
 
     /** Check for buffer overruns (based on ArrayInfo) */
     void checkScope(const Token *tok, const ArrayInfo &arrayInfo);
 
+    /** Check scope helper function - parse for body */
+    void checkScopeForBody(const Token *tok, const ArrayInfo &arrayInfo, bool &bailout);
 
     /** Helper function used when parsing for-loops */
     void parse_for_body(const Token *tok2, const ArrayInfo &arrayInfo, const std::string &strindex, bool condition_out_of_bounds, unsigned int counter_varid, const std::string &min_counter_value, const std::string &max_counter_value);
 
     /**
-     * Helper function for checkScope - check a function call
+     * Helper function for checkFunctionCall - check a function parameter
      * \param tok token for the function name
      * \param par on what parameter is the array used
      * \param arrayInfo the array information
      */
-    void checkFunctionCall(const Token &tok, const unsigned int par, const ArrayInfo &arrayInfo);
+    void checkFunctionParameter(const Token &tok, const unsigned int par, const ArrayInfo &arrayInfo);
 
-    void arrayIndexOutOfBounds(const Token *tok, int size, int index);
-    void arrayIndexOutOfBounds(const Token *tok, const ArrayInfo &arrayInfo, const std::vector<int> &index);
+    /**
+     * Helper function that checks if the array is used and if so calls the checkFunctionCall
+     * @param tok token that matches "%var% ("
+     * @param arrayInfo the array information
+     */
+    void checkFunctionCall(const Token *tok, const ArrayInfo &arrayInfo);
+
+    void arrayIndexOutOfBounds(const Token *tok, MathLib::bigint size, MathLib::bigint index);
+    void arrayIndexOutOfBounds(const Token *tok, const ArrayInfo &arrayInfo, const std::vector<MathLib::bigint> &index);
+    void arrayIndexOutOfBounds(const std::list<const Token *> &callstack, const ArrayInfo &arrayInfo, const std::vector<MathLib::bigint> &index);
     void bufferOverrun(const Token *tok, const std::string &varnames = "");
     void strncatUsage(const Token *tok);
     void outOfBounds(const Token *tok, const std::string &what);
     void sizeArgumentAsChar(const Token *tok);
     void terminateStrncpyError(const Token *tok);
-    void negativeIndexError(const Token *tok, long index);
+    void negativeIndexError(const Token *tok, MathLib::bigint index);
     void cmdLineArgsError(const Token *tok);
+    void pointerOutOfBounds(const Token *tok, const std::string &object);	// UB when result of calculation is out of bounds
 
-    void getErrorMessages()
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings)
     {
-        arrayIndexOutOfBounds(0, 2, 2);
-        bufferOverrun(0, std::string("buffer"));
-        strncatUsage(0);
-        outOfBounds(0, "index");
-        sizeArgumentAsChar(0);
-        terminateStrncpyError(0);
-        negativeIndexError(0, -1);
-        cmdLineArgsError(0);
+        CheckBufferOverrun c(0, settings, errorLogger);
+        c.arrayIndexOutOfBounds(0, 2, 2);
+        c.bufferOverrun(0, std::string("buffer"));
+        c.strncatUsage(0);
+        c.outOfBounds(0, "index");
+        c.sizeArgumentAsChar(0);
+        c.terminateStrncpyError(0);
+        c.negativeIndexError(0, -1);
+        c.cmdLineArgsError(0);
+        c.pointerOutOfBounds(0, "array");
     }
 
-    std::string name() const
+    std::string myName() const
     {
         return "Bounds checking";
     }

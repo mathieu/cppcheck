@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,20 +34,27 @@ class CheckAutoVariables : public Check
 {
 public:
     /** This constructor is used when registering the CheckClass */
-    CheckAutoVariables() : Check()
+    CheckAutoVariables() : Check(myName())
     { }
 
     /** This constructor is used when running checks. */
     CheckAutoVariables(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(tokenizer, settings, errorLogger)
+        : Check(myName(), tokenizer, settings, errorLogger)
     { }
+
+    /** @brief Run checks against the normal token list */
+    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
+    {
+        CheckAutoVariables checkAutoVariables(tokenizer, settings, errorLogger);
+        checkAutoVariables.returnReference();
+    }
 
     void runSimplifiedChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
     {
         CheckAutoVariables checkAutoVariables(tokenizer, settings, errorLogger);
         checkAutoVariables.autoVariables();
         checkAutoVariables.returnPointerToLocalArray();
-        checkAutoVariables.returnReference();
+        checkAutoVariables.returncstr();
     }
 
     /** Check auto variables */
@@ -63,14 +70,9 @@ public:
     void returncstr();
 
 private:
-    std::set<std::string> fp_list;
-    std::set<unsigned int> vd_list;
-    std::set<unsigned int> vda_list;
     bool errorAv(const Token* left, const Token* right);
     bool isAutoVar(unsigned int varId);
     bool isAutoVarArray(unsigned int varId);
-    void addVD(unsigned int varId);
-    void addVDA(unsigned int varId);
 
     /**
      * Returning a temporary object?
@@ -86,17 +88,18 @@ private:
     void errorReturnAutocstr(const Token *tok);
     void errorReturnTempPointer(const Token *tok);
 
-    void getErrorMessages()
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings)
     {
-        errorAutoVariableAssignment(0);
-        errorReturnPointerToLocalArray(0);
-        errorReturnReference(0);
-        errorReturnTempReference(0);
-        errorReturnAutocstr(0);
-        errorReturnTempPointer(0);
+        CheckAutoVariables c(0,settings,errorLogger);
+        c.errorAutoVariableAssignment(0);
+        c.errorReturnPointerToLocalArray(0);
+        c.errorReturnReference(0);
+        c.errorReturnTempReference(0);
+        c.errorReturnAutocstr(0);
+        c.errorReturnTempPointer(0);
     }
 
-    std::string name() const
+    std::string myName() const
     {
         return "Auto Variables";
     }

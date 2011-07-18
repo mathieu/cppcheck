@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,14 @@
  */
 
 
-#include "threadresult.h"
+#include <QString>
+#include <QMutexLocker>
+#include <QList>
+#include <QStringList>
 #include <QDebug>
+#include "erroritem.h"
+#include "errorlogger.h"
+#include "threadresult.h"
 
 ThreadResult::ThreadResult() : mMaxProgress(0), mProgress(0)
 {
@@ -32,7 +38,7 @@ ThreadResult::~ThreadResult()
 
 void ThreadResult::reportOut(const std::string &outmsg)
 {
-    Q_UNUSED(outmsg);
+    emit Log(QString::fromStdString(outmsg));
 }
 
 void ThreadResult::FileChecked(const QString &file)
@@ -40,33 +46,38 @@ void ThreadResult::FileChecked(const QString &file)
     QMutexLocker locker(&mutex);
     Q_UNUSED(file); //For later use maybe?
     mProgress++;
-    emit Progress(mProgress, mMaxProgress);
+    emit Progress(mProgress);
 }
 
 void ThreadResult::reportErr(const ErrorLogger::ErrorMessage &msg)
 {
     QMutexLocker locker(&mutex);
 
-    QVariantList lines;
+    QList<unsigned int> lines;
     QStringList files;
 
     for (std::list<ErrorLogger::ErrorMessage::FileLocation>::const_iterator tok = msg._callStack.begin();
          tok != msg._callStack.end();
          ++tok)
     {
-        files << QString((*tok).file.c_str());
+        files << QString((*tok).getfile(false).c_str());
         lines << (*tok).line;
     }
 
-    emit Error(QString(callStackToString(msg._callStack).c_str()),
-               QString(msg._severity.c_str()),
-               QString(msg._msg.c_str()),
-               files,
-               lines,
-               QString(msg._id.c_str()));
+    ErrorItem item;
+    item.file = QString(callStackToString(msg._callStack).c_str());
+    item.files = files;
+    item.id = QString(msg._id.c_str());
+    item.lines = lines;
+    item.summary = QString::fromStdString(msg.shortMessage());
+    item.message = QString::fromStdString(msg.verboseMessage());
+    item.severity = msg._severity;
+    item.inconclusive = msg._inconclusive;
 
-
-
+    if (msg._severity != Severity::debug)
+        emit Error(item);
+    else
+        emit DebugError(item);
 }
 
 QString ThreadResult::GetNextFile()
@@ -78,13 +89,6 @@ QString ThreadResult::GetNextFile()
     }
 
     return mFiles.takeFirst();
-}
-
-
-void ThreadResult::reportStatus(unsigned int index, unsigned int max)
-{
-    Q_UNUSED(index);
-    Q_UNUSED(max);
 }
 
 void ThreadResult::SetFiles(const QStringList &files)
@@ -106,4 +110,3 @@ int ThreadResult::GetFileCount()
     QMutexLocker locker(&mutex);
     return mFiles.size();
 }
-

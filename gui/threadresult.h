@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
 #include <QStringList>
 #include <QVariant>
 #include "../lib/errorlogger.h"
+
+class ErrorItem;
 
 /// @addtogroup GUI
 /// @{
@@ -69,38 +71,41 @@ public:
     */
     void reportOut(const std::string &outmsg);
     void reportErr(const ErrorLogger::ErrorMessage &msg);
-    void reportStatus(unsigned int index, unsigned int max);
+
 public slots:
 
     /**
-    * @brief Slot threads use to signal this class that a spesific file is checked
-    * @param file File taht is checked
+    * @brief Slot threads use to signal this class that a specific file is checked
+    * @param file File that is checked
     */
     void FileChecked(const QString &file);
 signals:
     /**
     * @brief Progress signal
     * @param value Current progress
-    * @param max Maximum progress
     */
-    void Progress(int value, int max);
+    void Progress(int value);
 
     /**
     * @brief Signal of a new error
     *
-    * @param file filename
-    * @param severity error severity
-    * @param message error message
-    * @param files list of files affected by the error
-    * @param lines list of file line numers affected by the error
-    * @param id error id
+    * @param item Error data
     */
-    void Error(const QString &file,
-               const QString &severity,
-               const QString &message,
-               const QStringList &files,
-               const QVariantList &lines,
-               const QString &id);
+    void Error(const ErrorItem &item);
+
+    /**
+    * @brief Signal of a new log message
+    *
+    * @param logline Log line
+    */
+    void Log(const QString &logline);
+
+    /**
+    * @brief Signal of a debug error
+    *
+    * @param item Error data
+    */
+    void DebugError(const ErrorItem &item);
 
 protected:
 

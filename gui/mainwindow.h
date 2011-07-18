@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,14 +24,22 @@
 #include <QFileDialog>
 #include <QSignalMapper>
 #include <QActionGroup>
+#include <QTimer>
 #include <QToolBar>
+#include <QStringList>
 
 #include "resultsview.h"
 #include "settingsdialog.h"
 #include "translationhandler.h"
-
+#include "settings.h"
 #include "ui_main.h"
+
 class ThreadHandler;
+class LogView;
+class Project;
+class ErrorItem;
+class StatsDialog;
+class QAction;
 
 /// @addtogroup GUI
 /// @{
@@ -44,6 +52,12 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
+
+    /**
+    * @brief Maximum number of MRU project items in File-menu.
+    */
+    enum { MaxRecentProjects = 5 };
+
     MainWindow();
     virtual ~MainWindow();
 
@@ -68,10 +82,10 @@ public slots:
     void ClearResults();
 
     /**
-    * @brief Show errors with type "possible error"
-    * @param checked Should errors be shown (true) or hidden (false)
+    * @brief Slot to open XML report file
+    *
     */
-    void ShowAll(bool checked);
+    void OpenXML();
 
     /**
     * @brief Show errors with type "style"
@@ -80,16 +94,34 @@ public slots:
     void ShowStyle(bool checked);
 
     /**
-    * @brief Show errors with type "possible style"
-    * @param checked Should errors be shown (true) or hidden (false)
-    */
-    void ShowAllStyle(bool checked);
-
-    /**
     * @brief Show errors with type "error"
     * @param checked Should errors be shown (true) or hidden (false)
     */
     void ShowErrors(bool checked);
+
+    /**
+    * @brief Show errors with type "warning"
+    * @param checked Should errors be shown (true) or hidden (false)
+    */
+    void ShowWarnings(bool checked);
+
+    /**
+    * @brief Show errors with type "portability"
+    * @param checked Should errors be shown (true) or hidden (false)
+    */
+    void ShowPortability(bool checked);
+
+    /**
+    * @brief Show errors with type "performance"
+    * @param checked Should errors be shown (true) or hidden (false)
+    */
+    void ShowPerformance(bool checked);
+
+    /**
+    * @brief Show errors with type "information"
+    * @param checked Should errors be shown (true) or hidden (false)
+    */
+    void ShowInformation(bool checked);
 
     /**
     * @brief Slot to check all "Show errors" menu items
@@ -137,6 +169,42 @@ public slots:
     */
     void Save();
 
+    /**
+    * @brief Slot to create new project file..
+    *
+    */
+    void NewProjectFile();
+
+    /**
+    * @brief Slot to open project file and start checking contained paths.
+    *
+    */
+    void OpenProjectFile();
+
+    /**
+    * @brief Slot to close open project file.
+    *
+    */
+    void CloseProjectFile();
+
+    /**
+    * @brief Slot to edit project file.
+    *
+    */
+    void EditProjectFile();
+
+    /**
+    * @brief Slot for showing the log view.
+    *
+    */
+    void ShowLogView();
+
+    /**
+    * @brief Slot for showing the scan and project statistics.
+    *
+    */
+    void ShowStatistics();
+
 protected slots:
 
     /**
@@ -146,21 +214,31 @@ protected slots:
     void CheckDone();
 
     /**
+    * @brief Lock down UI while checking
+    *
+    */
+    void CheckLockDownUI();
+
+    /**
     * @brief Slot for enabling save and clear button
     *
     */
     void ResultsAdded();
 
     /**
-    * @brief Slot for changing the program's language
-    *
-    */
-    void MapLanguage(QAction *);
-
-    /**
     * @brief Slot for showing/hiding standard toolbar
     */
-    void ToggleToolbar();
+    void ToggleMainToolBar();
+
+    /**
+    * @brief Slot for showing/hiding Categories toolbar
+    */
+    void ToggleViewToolBar();
+
+    /**
+    * @brief Slot for showing/hiding Filter toolbar
+    */
+    void ToggleFilterToolBar();
 
     /**
     * @brief Slot for updating View-menu before it is shown.
@@ -179,19 +257,35 @@ protected slots:
     */
     void OpenHelpContents();
 
+    /**
+    * @brief Add new line to log.
+    *
+    */
+    void Log(const QString &logline);
+
+    /**
+    * @brief Handle new debug error.
+    *
+    */
+    void DebugError(const ErrorItem &item);
+
+    /**
+    * @brief Filters the results in the result list.
+    */
+    void FilterResults();
+
+    /**
+    * @brief Opens recently opened project file.
+    */
+    void OpenRecentProject();
+
 protected:
 
     /**
-    * @brief Create menu items to change language
-    *
-    */
-    void CreateLanguageMenuItems();
-
-    /**
     * @brief Set current language
-    * @param index Index of the language to set
+    * @param code Language code of the language to set (e.g. "en").
     */
-    void SetLanguage(const int index);
+    void SetLanguage(const QString &code);
 
     /**
     * @brief Event coming when application is about to close.
@@ -228,27 +322,11 @@ protected:
     void DoCheckFiles(const QStringList &files);
 
     /**
-    * @brief Get all files recursively from given path
-    *
-    * @param path Path to get files from
-    * @return List of file paths
-    */
-    QStringList GetFilesRecursively(const QString &path);
-
-    /**
     * @brief Get our default cppcheck settings and read project file.
     *
     * @return Default cppcheck settings
     */
     Settings GetCppcheckSettings();
-
-    /**
-    * @brief Removes all unaccepted (by cppcheck core) files from the list
-    *
-    * @param list List to remove unaccepted files from
-    * @return List of files that are all accepted by cppcheck core
-    */
-    QStringList RemoveUnacceptedFiles(const QStringList &list);
 
     /**
     * @brief Load program settings
@@ -271,7 +349,58 @@ protected:
     /**
     * @brief Show help contents
     */
-    void OpenHtmlHelpContents();
+    void OpenOnlineHelp();
+
+    /**
+    * @brief Enable or disable project file actions.
+    * Project editing and closing actions should be only enabled when project is
+    * open and we are not checking files.
+    * @param enable If true then actions are enabled.
+    */
+    void EnableProjectActions(bool enable);
+
+    /**
+    * @brief Enable or disable project file actions.
+    * Project opening and creating actions should be disabled when checking.
+    * @param enable If true then actions are enabled.
+    */
+    void EnableProjectOpenActions(bool enable);
+
+    /**
+    * @brief Add include directories.
+    * @param includeDirs List of include directories to add.
+    * @param result Settings class where include directories are added.
+    */
+    void AddIncludeDirs(const QStringList &includeDirs, Settings &result);
+
+    /**
+    * @brief Handle command line parameters given to GUI.
+    * @param params List of string given to command line.
+    */
+    void HandleCLIParams(const QStringList &params);
+
+    /**
+    * @brief Load project file to the GUI.
+    * @param filePath Filename (inc. path) of project file to load.
+    */
+    void LoadProjectFile(const QString &filePath);
+
+    /**
+    * @brief Update project MRU items in File-menu.
+    */
+    void UpdateMRUMenuItems();
+
+    /**
+    * @brief Add project file (path) to the MRU list.
+    * @param project Full path to the project file to add.
+    */
+    void AddProjectMRU(const QString &project);
+
+    /**
+    * @brief Remove project file (path) from the MRU list.
+    * @param project Full path of the project file to remove.
+    */
+    void RemoveProjectMRU(const QString &project);
 
     /**
     * @brief Program settings
@@ -304,16 +433,43 @@ protected:
     Ui::MainWindow mUI;
 
     /**
-    * @brief Group holding all supported languages
-    *
-    */
-    QActionGroup *mLanguages;
-
-    /**
     * @brief Current checked directory.
     */
     QString mCurrentDirectory;
 
+    /**
+    * @brief Log view.
+    */
+    LogView *mLogView;
+
+    /**
+    * @brief Project (file).
+    */
+    Project *mProject;
+
+    /**
+    * @brief Filter field in the Filter toolbar.
+    */
+    QLineEdit* mLineEditFilter;
+
+    /**
+    * @brief Timer to delay filtering while typing.
+    */
+    QTimer* mFilterTimer;
+
+private:
+
+    /**
+    * @brief Are we exiting the cppcheck?
+    * If this is true then the cppcheck is waiting for check threads to exit
+    * so that the application can be closed.
+    */
+    bool mExiting;
+
+    /**
+    * @brief Project MRU menu actions.
+    */
+    QAction *mRecentProjectActs[MaxRecentProjects];
 };
 /// @}
 #endif // MAINWINDOW_H

@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,36 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "translationhandler.h"
-
 #include <QApplication>
 #include <QFile>
 #include <QDebug>
 #include <QLocale>
+#include "translationhandler.h"
 
 TranslationHandler::TranslationHandler(QObject *parent) :
     QObject(parent),
-    mCurrentLanguage(-1),
+    mCurrentLanguage("en"),
     mTranslator(new QTranslator(this))
 {
-    //Add our default languages
-    mNames  << QT_TRANSLATE_NOOP("MainWindow", "English")
-            << QT_TRANSLATE_NOOP("MainWindow", "Dutch")
-            << QT_TRANSLATE_NOOP("MainWindow", "Finnish")
-            << QT_TRANSLATE_NOOP("MainWindow", "Swedish")
-            << QT_TRANSLATE_NOOP("MainWindow", "German")
-            << QT_TRANSLATE_NOOP("MainWindow", "Russian")
-            << QT_TRANSLATE_NOOP("MainWindow", "Polish");
+    // Add our available languages
+    // Keep this list sorted
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Dutch"), "cppcheck_nl");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "English"), "cppcheck_en");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Finnish"), "cppcheck_fi");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "French"), "cppcheck_fr");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "German"), "cppcheck_de");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Japanese"), "cppcheck_ja");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Polish"), "cppcheck_pl");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Russian"), "cppcheck_ru");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Serbian"), "cppcheck_sr");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Spanish"), "cppcheck_es");
+    AddTranslation(QT_TRANSLATE_NOOP("MainWindow", "Swedish"), "cppcheck_sv");
 
-    mFiles  << "cppcheck_en"
-            << "cppcheck_nl"
-            << "cppcheck_fi"
-            << "cppcheck_se"
-            << "cppcheck_de"
-            << "cppcheck_ru"
-            << "cppcheck_pl";
-
-    //Load english as a fallback language
+    //Load English as a fallback language
     QTranslator *english = new QTranslator();
     if (english->load("cppcheck_en"))
     {
@@ -62,20 +58,20 @@ TranslationHandler::~TranslationHandler()
 {
 }
 
-const QStringList TranslationHandler::GetNames()
+const QStringList TranslationHandler::GetNames() const
 {
-    return mNames;
+    QStringList names;
+    foreach(TranslationInfo translation, mTranslations)
+    {
+        names.append(translation.mName);
+    }
+    return names;
 }
 
-const QStringList TranslationHandler::GetFiles()
+bool TranslationHandler::SetLanguage(const QString &code, QString &error)
 {
-    return mFiles;
-}
-
-bool TranslationHandler::SetLanguage(const int index, QString &error)
-{
-    //If english is the language
-    if (index == 0)
+    //If English is the language
+    if (code == "en")
     {
         //Just remove all extra translators
         if (mTranslator)
@@ -83,48 +79,49 @@ bool TranslationHandler::SetLanguage(const int index, QString &error)
             qApp->removeTranslator(mTranslator);
         }
 
-        mCurrentLanguage = index;
+        mCurrentLanguage = code;
         return true;
     }
 
     //Make sure the translator is otherwise valid
-    if (index >= mNames.size())
+    int index = GetLanguageIndexByCode(code);
+    if (index == -1)
     {
-        error = QObject::tr("Incorrect language specified!");
+        error = QObject::tr("Unknown language specified!");
         return false;
     }
 
     //Load the new language
-    if (!mTranslator->load(mFiles[index]))
+    if (!mTranslator->load(mTranslations[index].mFilename))
     {
         //If it failed, lets check if the default file exists
-        if (!QFile::exists(mFiles[index] + ".qm"))
+        if (!QFile::exists(mTranslations[index].mFilename + ".qm"))
         {
             error = QObject::tr("Language file %1 not found!");
-            error = error.arg(mFiles[index] + ".qm");
+            error = error.arg(mTranslations[index].mFilename + ".qm");
             return false;
         }
 
         //If file exists, there's something wrong with it
         error = QObject::tr("Failed to load translation for language %1 from file %2");
-        error = error.arg(mNames[index]);
-        error = error.arg(mFiles[index] + ".qm");
+        error = error.arg(mTranslations[index].mName);
+        error = error.arg(mTranslations[index].mFilename + ".qm");
         return false;
     }
 
     qApp->installTranslator(mTranslator);
 
-    mCurrentLanguage = index;
+    mCurrentLanguage = code;
 
     return true;
 }
 
-int TranslationHandler::GetCurrentLanguage() const
+QString TranslationHandler::GetCurrentLanguage() const
 {
     return mCurrentLanguage;
 }
 
-int TranslationHandler::SuggestLanguage() const
+QString TranslationHandler::SuggestLanguage() const
 {
     /*
     Get language from system locale's name
@@ -135,19 +132,37 @@ int TranslationHandler::SuggestLanguage() const
     QString language = QLocale::system().name().left(2);
     //qDebug()<<"Your language is"<<language;
 
-    //catenate that to the default language filename
-    QString file = QString("cppcheck_%1").arg(language);
-    //qDebug()<<"Language file could be"<<file;
-
-
     //And see if we can find it from our list of language files
-    int index = mFiles.indexOf(file);
+    int index = GetLanguageIndexByCode(language);
 
-    //If nothing found, return english
+    //If nothing found, return English
     if (index < 0)
     {
-        return 0;
+        return "en";
     }
 
+    return language;
+}
+
+void TranslationHandler::AddTranslation(const char *name, const char *filename)
+{
+    TranslationInfo info;
+    info.mName = name;
+    info.mFilename = filename;
+    info.mCode = QString(filename).right(2);
+    mTranslations.append(info);
+}
+
+int TranslationHandler::GetLanguageIndexByCode(const QString &code) const
+{
+    int index = -1;
+    for (int i = 0; i < mTranslations.size(); i++)
+    {
+        if (mTranslations[i].mCode == code)
+        {
+            index = i;
+            break;
+        }
+    }
     return index;
 }

@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,33 +39,55 @@ private:
         TEST_CASE(test3);
         TEST_CASE(test4);
         TEST_CASE(test5);
+        TEST_CASE(test6); // ticket #2602
 
         // [ 2236547 ] False positive --style unused function, called via pointer
         TEST_CASE(func_pointer1);
         TEST_CASE(func_pointer2);
+        TEST_CASE(func_pointer3);
+        TEST_CASE(func_pointer4); // ticket #2807
 
         TEST_CASE(ctor);
 
         TEST_CASE(classInClass);
         TEST_CASE(sameFunctionNames);
         TEST_CASE(incompleteImplementation);
+
+        TEST_CASE(derivedClass);   // skip warning for derived classes. It might be a virtual function.
+
+        TEST_CASE(friendClass);
+
+        TEST_CASE(borland);     // skip FP when using __property
+
+        // No false positives when there are "unused" templates that are removed in the simplified token list
+        TEST_CASE(template1);
+
+        // #2407 - FP when called from operator()
+        TEST_CASE(fp_operator);
+        TEST_CASE(testDoesNotIdentifyMethodAsFirstFunctionArgument); // #2480
+        TEST_CASE(testDoesNotIdentifyMethodAsMiddleFunctionArgument);
+        TEST_CASE(testDoesNotIdentifyMethodAsLastFunctionArgument);
+
+        TEST_CASE(multiFile);
+        TEST_CASE(unknownBaseTemplate); // ticket #2580
     }
 
 
     void check(const char code[])
     {
+        // Clear the error buffer..
+        errout.str("");
+
+        Settings settings;
+        settings._checkCodingStyle = true;
+
         // Tokenize..
-        Tokenizer tokenizer;
+        Tokenizer tokenizer(&settings, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         tokenizer.simplifyTokenList();
 
-        // Clear the error buffer..
-        errout.str("");
-
         // Check for unused private functions..
-        Settings settings;
-        settings._checkCodingStyle = true;
         CheckClass checkClass(&tokenizer, &settings, this);
         checkClass.privateFunctions();
     }
@@ -106,7 +128,7 @@ private:
               "unsigned int Fred::f()\n"
               "{ }\n");
 
-        TODO_ASSERT_EQUALS("[p.h:4]: (style) Unused private function 'Fred::f'\n", errout.str());
+        ASSERT_EQUALS("[p.h:4]: (style) Unused private function 'Fred::f'\n", errout.str());
 
         check("#file \"p.h\"\n"
               "class Fred\n"
@@ -122,7 +144,7 @@ private:
               "{\n"
               "}\n"
               "\n");
-        TODO_ASSERT_EQUALS("[p.h:4]: (style) Unused private function 'Fred::f'\n", errout.str());
+        ASSERT_EQUALS("[p.h:4]: (style) Unused private function 'Fred::f'\n", errout.str());
 
         // Don't warn about include files which implementation we don't see
         check("#file \"p.h\"\n"
@@ -205,6 +227,14 @@ private:
         ASSERT_EQUALS("", errout.str());
     }
 
+    void test6() // ticket #2602 segmentation fault
+    {
+        check("class A {\n"
+              "    A& operator=(const A&);\n"
+              "};\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
 
 
 
@@ -254,6 +284,34 @@ private:
     }
 
 
+    void func_pointer3()
+    {
+        check("class c1\n"
+              "{\n"
+              "public:\n"
+              "    c1()\n"
+              "    { sigc::mem_fun(this, &c1::f1); }\n"
+              "\n"
+              "private:\n"
+              "    void f1() const {}\n"
+              "};\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+
+    void func_pointer4() // ticket #2807
+    {
+        check("class myclass {\n"
+              "public:\n"
+              "    myclass();\n"
+              "private:\n"
+              "    static void f();\n"
+              "    void (*fptr)();\n"
+              "};\n"
+              "myclass::myclass() { fptr = &f; }\n"
+              "void myclass::f() {}\n");
+        ASSERT_EQUALS("", errout.str());
+    }
 
 
     void ctor()
@@ -345,6 +403,214 @@ private:
               "void A::b() { }\n");
         ASSERT_EQUALS("", errout.str());
     }
+
+    void derivedClass()
+    {
+        // skip warning in derived classes in case the function is virtual
+        check("class derived : public base\n"
+              "{\n"
+              "public:\n"
+              "    derived() : base() { }\n"
+              "private:\n"
+              "    void f();\n"
+              "};\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void friendClass()
+    {
+        // ticket #2459 - friend class
+        check("class Foo {\n"
+              "private:\n"
+              "    friend Bar;\n"
+              "    void f() { }\n"
+              "};");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void borland()
+    {
+        // ticket #2034 - Borland C++ __property
+        check("class Foo {\n"
+              "private:\n"
+              "    int getx() {\n"
+              "        return 123;\n"
+              "    }\n"
+              "public:\n"
+              "    Foo() { }\n"
+              "    __property int x = {read=getx}\n"
+              "};");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void template1()
+    {
+        // ticket #2067 - Template methods do not "use" private ones
+        check("class A {\n"
+              "public:\n"
+              "    template <class T>\n"
+              "    T getVal() const;\n"
+              "\n"
+              "private:\n"
+              "    int internalGetVal() const { return 8000; }\n"
+              "};\n"
+              "\n"
+              "template <class T>\n"
+              "T A::getVal() const {\n"
+              "    return internalGetVal();\n"
+              "};\n");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void fp_operator()
+    {
+        // #2407 - FP when function is called from operator()
+        check("class Fred\n"
+              "{\n"
+              "public:\n"
+              "    void operator()(int x) {\n"
+              "        startListening();\n"
+              "    }\n"
+              "\n"
+              "private:\n"
+              "    void startListening() {\n"
+              "    }\n"
+              "};\n");
+        ASSERT_EQUALS("", errout.str());
+
+        check("class Fred\n"
+              "{\n"
+              "public:\n"
+              "    void operator()(int x) {\n"
+              "    }\n"
+              "\n"
+              "private:\n"
+              "    void startListening() {\n"
+              "    }\n"
+              "};\n");
+        ASSERT_EQUALS("[test.cpp:8]: (style) Unused private function 'Fred::startListening'\n", errout.str());
+    }
+
+    void testDoesNotIdentifyMethodAsFirstFunctionArgument()
+    {
+        check("#include <iostream>"
+              "void callback(void (*func)(int), int arg)"
+              "{"
+              "    (*func)(arg);"
+              "}"
+              "class MountOperation"
+              "{"
+              "    static void Completed(int i);"
+              "public:"
+              "    MountOperation(int i);"
+              "};"
+              "void MountOperation::Completed(int i)"
+              "{"
+              "    std::cerr << i << std::endl;"
+              "}"
+              "MountOperation::MountOperation(int i)"
+              "{"
+              "    callback(MountOperation::Completed, i);"
+              "}"
+              "int main(void)"
+              "{"
+              "    MountOperation aExample(10);"
+              "}"
+             );
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void testDoesNotIdentifyMethodAsMiddleFunctionArgument()
+    {
+        check("#include <iostream>"
+              "void callback(char, void (*func)(int), int arg)"
+              "{"
+              "    (*func)(arg);"
+              "}"
+              "class MountOperation"
+              "{"
+              "    static void Completed(int i);"
+              "public:"
+              "    MountOperation(int i);"
+              "};"
+              "void MountOperation::Completed(int i)"
+              "{"
+              "    std::cerr << i << std::endl;"
+              "}"
+              "MountOperation::MountOperation(int i)"
+              "{"
+              "    callback('a', MountOperation::Completed, i);"
+              "}"
+              "int main(void)"
+              "{"
+              "    MountOperation aExample(10);"
+              "}"
+             );
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void testDoesNotIdentifyMethodAsLastFunctionArgument()
+    {
+        check("#include <iostream>"
+              "void callback(int arg, void (*func)(int))"
+              "{"
+              "    (*func)(arg);"
+              "}"
+              "class MountOperation"
+              "{"
+              "    static void Completed(int i);"
+              "public:"
+              "    MountOperation(int i);"
+              "};"
+              "void MountOperation::Completed(int i)"
+              "{"
+              "    std::cerr << i << std::endl;"
+              "}"
+              "MountOperation::MountOperation(int i)"
+              "{"
+              "    callback(i, MountOperation::Completed);"
+              "}"
+              "int main(void)"
+              "{"
+              "    MountOperation aExample(10);"
+              "}"
+             );
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void multiFile() // ticket #2567
+    {
+        check("#file \"test.h\"\n"
+              "struct Fred\n"
+              "{\n"
+              "    Fred()\n"
+              "    {\n"
+              "        Init();\n"
+              "    }\n"
+              "private:\n"
+              "    void Init();\n"
+              "};\n"
+              "#endfile\n"
+              "void Fred::Init()\n"
+              "{\n"
+              "}\n");
+
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void unknownBaseTemplate() // ticket #2580
+    {
+        check("class Bla : public Base2<Base> {\n"
+              "public:\n"
+              "    Bla() {}\n"
+              "private:\n"
+              "    virtual void F() const;\n"
+              "};\n"
+              "void Bla::F() const { }");
+
+        ASSERT_EQUALS("", errout.str());
+    }
+
 };
 
 REGISTER_TEST(TestUnusedPrivateFunction)

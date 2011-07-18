@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,22 +41,24 @@ private:
         TEST_CASE(return1);
         TEST_CASE(assignChar);
         TEST_CASE(and03);
+        TEST_CASE(pointer);
     }
 
     void check(const char code[])
     {
+        // Clear the error buffer..
+        errout.str("");
+
+        Settings settings;
+        settings._checkCodingStyle = true;
+
         // Tokenize..
-        Tokenizer tokenizer;
+        Tokenizer tokenizer(&settings, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         tokenizer.setVarId();
 
-        // Clear the error buffer..
-        errout.str("");
-
         // Check char variable usage..
-        Settings settings;
-        settings._checkCodingStyle = true;
         CheckOther checkOther(&tokenizer, &settings, this);
         checkOther.checkCharVariable();
     }
@@ -75,20 +77,20 @@ private:
               "    char ch = 0x80;\n"
               "    buf[ch] = 0;\n"
               "}\n");
-        ASSERT_EQUALS("[test.cpp:4]: (style) Warning - using char variable as array index\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:4]: (warning) When using a char variable as array index, sign extension will mean buffer overflow.\n", errout.str());
 
         check("void foo()\n"
               "{\n"
               "    signed char ch = 0x80;\n"
               "    buf[ch] = 0;\n"
               "}\n");
-        ASSERT_EQUALS("[test.cpp:4]: (style) Warning - using char variable as array index\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:4]: (warning) When using a char variable as array index, sign extension will mean buffer overflow.\n", errout.str());
 
         check("void foo(char ch)\n"
               "{\n"
               "    buf[ch] = 0;\n"
               "}\n");
-        ASSERT_EQUALS("[test.cpp:3]: (style) Warning - using char variable as array index\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:3]: (warning) When using a char variable as array index, sign extension will mean buffer overflow.\n", errout.str());
     }
 
 
@@ -100,7 +102,7 @@ private:
               "    char ch;\n"
               "    result = a | ch;\n"
               "}\n");
-        ASSERT_EQUALS("[test.cpp:4]: (style) Warning - using char variable in bit operation\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:4]: (warning) When using char variables in bit operations, sign extension can generate unexpected results.\n", errout.str());
     }
 
     void bitop2()
@@ -144,6 +146,24 @@ private:
         ASSERT_EQUALS("", errout.str());
     }
 
+    void pointer()
+    {
+        // ticket #2866
+        check("void f(char *p) {\n"
+              "    int ret = 0;\n"
+              "    ret |= *p;\n"
+              "    return ret;\n"
+              "}");
+        ASSERT_EQUALS("[test.cpp:2]: (warning) When using char variables in bit operations, sign extension can generate unexpected results.\n", errout.str());
+
+        // fixed code
+        check("void f(char *p) {\n"
+              "    int ret = 0;\n"
+              "    ret |= (unsigned char)*p;\n"
+              "    return ret;\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
+    }
 };
 
 REGISTER_TEST(TestCharVar)

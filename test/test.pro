@@ -1,52 +1,77 @@
+
 TEMPLATE = app
 TARGET = test
 DEPENDPATH += .
-INCLUDEPATH += ../lib
+INCLUDEPATH += . ../cli ../lib
 OBJECTS_DIR = temp
-CONFIG += warn_on debug
+CONFIG += warn_on console
 CONFIG -= qt app_bundle
-DEFINES += UNIT_TESTING
+win32 {
+    LIBS += -lshlwapi
+}
 
-include($$PWD/../lib/lib.pri)
-HEADERS += testsuite.h
-SOURCES += testautovariables.cpp \
+BASEPATH = ../externals/tinyxml/
+include(../externals/tinyxml/tinyxml.pri)
+BASEPATH = ../lib/
+include(../lib/lib.pri)
+
+# cli/*
+SOURCES += ../cli/cmdlineparser.cpp \
+           ../cli/cppcheckexecutor.cpp \
+           ../cli/filelister.cpp \
+           ../cli/pathmatch.cpp \
+           ../cli/threadexecutor.cpp
+
+HEADERS += ../cli/cmdlineparser.h \
+           ../cli/cppcheckexecutor.h \
+           ../cli/filelister.h \
+           ../cli/pathmatch.h \
+           ../cli/threadexecutor.h
+
+# test/*
+
+HEADERS += options.h redirect.h testsuite.h
+SOURCES += options.cpp \
+           testautovariables.cpp \
            testbufferoverrun.cpp \
            testcharvar.cpp \
            testclass.cpp \
+           testcmdlineparser.cpp \
            testconstructors.cpp \
            testcppcheck.cpp \
-           testdangerousfunctions.cpp \
            testdivision.cpp \
+           testerrorlogger.cpp \
            testexceptionsafety.cpp \
            testfilelister.cpp \
            testincompletestatement.cpp \
            testmathlib.cpp \
            testmemleak.cpp \
+           testnullpointer.cpp \
+           testobsoletefunctions.cpp \
+           testoptions.cpp \
            testother.cpp \
+           testpath.cpp \
+           testpathmatch.cpp \
+           testpostfixoperator.cpp \
            testpreprocessor.cpp \
-           testredundantif.cpp \
            testrunner.cpp \
+           testsettings.cpp \
            testsimplifytokens.cpp \
            teststl.cpp \
            testsuite.cpp \
+           testsuppressions.cpp \
+           testsymboldatabase.cpp \
+           testthreadexecutor.cpp \
            testtoken.cpp \
            testtokenize.cpp \
+           testuninitvar.cpp \
            testunusedfunctions.cpp \
            testunusedprivfunc.cpp \
            testunusedvar.cpp
 
-win32 {
-    CONFIG += console
-    LIBS += -lshlwapi
+# Change Visual Studio compiler (CL) warning level to W4
+contains(QMAKE_CXX, cl) {
+    QMAKE_CXXFLAGS_WARN_ON -= -W3
+    QMAKE_CXXFLAGS_WARN_ON += -W4
+    DEFINES += _CRT_SECURE_NO_WARNINGS
 }
-
-contains(QMAKE_CXX, g++) {
-    QMAKE_CXXFLAGS_WARN_ON += -Wextra -pedantic
-
-    CONFIG(debug, debug|release) {
-        # checked STL
-        DEFINES += _GLIBCXX_DEBUG
-    }
-}
-
-

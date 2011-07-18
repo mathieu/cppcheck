@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,13 @@
 #include "settings.h"
 #include "errorlogger.h"
 
+#if (defined(__GNUC__) || defined(__sun)) && !defined(__MINGW32__)
+#define THREADING_MODEL_FORK
+#endif
+
+/// @addtogroup CLI
+/// @{
+
 /**
  * This class will take a list of filenames and settings and check then
  * all files using threads.
@@ -32,12 +39,12 @@
 class ThreadExecutor : public ErrorLogger
 {
 public:
-    ThreadExecutor(const std::vector<std::string> &filenames, const Settings &settings, ErrorLogger &_errorLogger);
+    ThreadExecutor(const std::vector<std::string> &filenames, const std::map<std::string, long> &filesizes, Settings &settings, ErrorLogger &_errorLogger);
     virtual ~ThreadExecutor();
     unsigned int check();
     virtual void reportOut(const std::string &outmsg);
     virtual void reportErr(const ErrorLogger::ErrorMessage &msg);
-    virtual void reportStatus(unsigned int index, unsigned int max);
+
     /**
      * @brief Add content to a file, to be used in unit testing.
      *
@@ -49,18 +56,29 @@ public:
 
 private:
     const std::vector<std::string> &_filenames;
-    const Settings &_settings;
+    const std::map<std::string, long> &_filesizes;
+    Settings &_settings;
     ErrorLogger &_errorLogger;
     unsigned int _fileCount;
 
     /** @brief Key is file name, and value is the content of the file */
     std::map<std::string, std::string> _fileContents;
 
-#if (defined(__GNUC__) || defined(__sun)) && !defined(__MINGW32__)
+#ifdef THREADING_MODEL_FORK
 private:
-    bool handleRead(unsigned int &result);
+    /**
+     * Read from the pipe, parse and handle what ever is in there.
+     *@return -1 in case of error
+     *         0 if there is nothing in the pipe to be read
+     *         1 if we did read something
+     */
+    int handleRead(int rpipe, unsigned int &result);
     void writeToPipe(char type, const std::string &data);
-    int _pipe[2];
+    /**
+     * Write end of status pipe, different for each child.
+     * Not used in master process.
+     */
+    int _wpipe;
     std::list<std::string> _errorList;
 public:
     /**
@@ -88,5 +106,7 @@ private:
     /** disabled assignment operator */
     void operator=(const ThreadExecutor &);
 };
+
+/// @}
 
 #endif // THREADEXECUTOR_H

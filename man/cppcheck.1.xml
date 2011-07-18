@@ -76,7 +76,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
       </author>
     </authorgroup>
     <copyright>
-      <year>2009 - 2010</year>
+      <year>2009 - 2011</year>
       <holder>&dhusername;</holder>
     </copyright>
     <legalnotice>
@@ -84,11 +84,11 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
         (but may be used by others).</para>
       <para>Permission is granted to copy, distribute and/or modify this
         document under the terms of the GNU General Public License,
-        Version 2 or (at your option) any later version published by
+        Version 3 or (at your option) any later version published by
         the Free Software Foundation.</para>
       <para>On Debian systems, the complete text of the GNU General Public
         License can be found in
-	<filename>/usr/share/common-licenses/GPL-2</filename>.</para>
+	<filename>/usr/share/common-licenses/GPL-3</filename>.</para>
     </legalnotice>
   </refentryinfo>
   <refmeta>
@@ -97,38 +97,49 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   </refmeta>
   <refnamediv>
     <refname>&dhpackage;</refname>
-    <refpurpose>Simple syntax checking of C/C++.</refpurpose>
+    <refpurpose>Tool for static C/C++ code analysis</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>&dhpackage;</command>
-      <arg choice="opt"><option>--append [file]</option></arg>
-      <arg choice="opt"><option>-D[id]</option></arg>
-      <arg choice="opt"><option>--enable=[id]</option></arg>
-      <arg choice="opt"><option>--error-exitcode=[n]</option></arg>
-      <arg choice="opt"><option>--exitcode-suppressions [file]</option></arg>
+      <arg choice="opt"><option>--append=&lt;file&gt;</option></arg>
+      <arg choice="opt"><option>-D&lt;id&gt;</option></arg>
+      <arg choice="opt"><option>--enable=&lt;id&gt;</option></arg>
+      <arg choice="opt"><option>--error-exitcode=&lt;n&gt;</option></arg>
+      <arg choice="opt"><option>--errorlist</option></arg>
+      <arg choice="opt"><option>--exitcode-suppressions=&lt;file&gt;</option></arg>
+      <arg choice="opt"><option>--file-list=&lt;file&gt;</option></arg>
       <arg choice="opt"><option>--force</option></arg>
       <arg choice="opt"><option>--help</option></arg>
-      <arg choice="opt"><option>-I[dir]</option></arg>
-      <arg choice="opt"><option>-j[jobs]</option></arg>
+      <arg choice="opt"><option>-I&lt;dir&gt;</option></arg>
+      <arg choice="opt"><option>-i&lt;dir&gt;</option></arg>
+      <arg choice="opt"><option>--inline-suppr</option></arg>
+      <arg choice="opt"><option>-j&lt;jobs&gt;</option></arg>
       <arg choice="opt"><option>--quiet</option></arg>
+      <arg choice="opt"><option>--report-progress</option></arg>
+      <arg choice="opt"><option>--rule=&lt;rule&gt;</option></arg>
+      <arg choice="opt"><option>--rule-file=&lt;file&gt;</option></arg>            
       <arg choice="opt"><option>--style</option></arg>
-      <arg choice="opt"><option>--suppressions [file]</option></arg>
-      <arg choice="opt"><option>--template ['text']</option></arg>
-      <arg choice="opt"><option>--unused-functions</option></arg>
+      <arg choice="opt"><option>--suppress=&lt;spec&gt;</option></arg>
+      <arg choice="opt"><option>--suppressions-list=&lt;file&gt;</option></arg>
+      <arg choice="opt"><option>--template '&lt;text&gt;'</option></arg>
       <arg choice="opt"><option>--verbose</option></arg>
       <arg choice="opt"><option>--version</option></arg>
       <arg choice="opt"><option>--xml</option></arg>
+      <arg choice="opt"><option>--xml-version=&lt;version&gt;]</option></arg>
       <arg choice="opt"><option>file or path</option></arg>
       <arg choice="plain"><option>...</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
-    <para>Tool for static C/C++ code analysis
-      intended to complement the checking of the compiler.
-      Checks for: memory leaks, mismatching allocation-deallocation,
-      buffer overrun, and many more.</para>
+    <para>Cppcheck is a command-line tool that tries to detect bugs that your C/C++ 
+      compiler doesn't see. It is versatile, and can check non-standard code 
+      including various compiler extensions, inline assembly code, etc. 
+      Its internal preprocessor can handle includes, macros, and several 
+      preprocessor commands. While Cppcheck is highly configurable, 
+      you can start using it just by giving it a path to the source code.
+    </para>
   </refsect1>
   <refsect1 id="options">
     <title>OPTIONS</title>
@@ -138,74 +149,81 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
            variablelist.term.break.after parameters to
            control the term elements. -->
       <varlistentry>
-        <term><option>--append=[file]</option></term>
+        <term><option>--append=&lt;file&gt;</option></term>
         <listitem>
           <para>This allows you to provide information about functions by providing an implementation for these.</para>
         </listitem>
       </varlistentry>      
       <varlistentry>
-        <term><option>-D[id]</option></term>
+        <term><option>-D&lt;id&gt;</option></term>
         <listitem>
-          <para>By default Cppcheck checks all configurations. Use -D to limit the checking. When -D is used the checking is limited to the given configuration.</para>
+          <para>By default Cppcheck checks all configurations. Use -D to limit the checking. When -D is used the checking is limited to the given configuration. 
+Example: -DDEBUG=1 -D__cplusplus</para>
         </listitem>
       </varlistentry>      
       <varlistentry>
-        <term><option>--enable=[id]</option></term>
+        <term><option>--enable=&lt;id&gt;</option></term>
         <listitem>
-          <para>Enable specific checks. The available ids are:
+          <para>Enable additional checks. The available ids are:
             <glosslist>
               <glossentry>
                 <glossterm>all</glossterm>
                 <glossdef>
-                  <para>Enable all checks.</para>
-                </glossdef>
-              </glossentry>
-              <glossentry>
-                <glossterm>exceptNew</glossterm>
-                <glossdef>
-                  <para>Check exception safety when using new.</para>
-                </glossdef>
-              </glossentry>
-              <glossentry>
-                <glossterm>exceptRealloc</glossterm>
-                <glossdef>
-                  <para>Check exception safety when reallocating.</para>
+                  <para>Enable all checks</para>
                 </glossdef>
               </glossentry>
               <glossentry>
                 <glossterm>style</glossterm>
                 <glossdef>
-                  <para>Check coding style.</para>
+                  <para>Check coding style</para>
                 </glossdef>
               </glossentry>
               <glossentry>
-                <glossterm>unusedFunctions</glossterm>
+                <glossterm>information</glossterm>
                 <glossdef>
-                  <para>Check for unused functions.</para>
+                  <para>Enable information messages</para>
                 </glossdef>
               </glossentry>
+              <glossentry>
+                <glossterm>unusedFunction</glossterm>
+                <glossdef>
+                  <para>Check for unused functions</para>
+                </glossdef>
+              </glossentry>
+              <glossentry>
+                <glossterm>missingInclude</glossterm>
+                <glossdef>
+                  <para>Check for missing includes</para>
+                </glossdef>
+              </glossentry>              
             </glosslist>          
-            Several ids can be given if you separate them with commas, e.g. --enable=style,unusedFunctions.
+            By default none of the additional checks are enabled. Several ids can be given if you separate them with commas, e.g. --enable=style,unusedFunction.
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--error-exitcode=[n]</option></term>
+        <term><option>--error-exitcode=&lt;n&gt;</option></term>
         <listitem>
-          <para>If errors are found, integer [n] is returned instead of default 0.
+          <para>If errors are found, integer &lt;n&gt; is returned instead of default 0.
           EXIT_FAILURE is returned if arguments are not valid or if no input files are
           provided. Note that your operating system can modify this value, e.g.
           256 can become 0.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--exitcode-suppressions [file]</option></term>
+        <term><option>--errorlist</option></term>
+        <listitem>
+          <para>Print a list of all possible error messages in XML format.</para>
+        </listitem>
+      </varlistentry>      
+      <varlistentry>
+        <term><option>--exitcode-suppressions=&lt;file&gt;</option></term>
         <listitem>
           <para>Used when certain messages should be displayed but should not cause a non-zero exitcode.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--file-list=[file]</option></term>
+        <term><option>--file-list=&lt;file&gt;</option></term>
         <listitem>
           <para>Specify the files to check in a text file. One filename per line.</para>
         </listitem>
@@ -226,12 +244,21 @@ default.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-I [dir]</option></term>
+        <term><option>-I &lt;dir&gt;</option></term>
         <listitem>
           <para>Give include path. Give several -I parameters to give several paths. First given path is checked first. If paths are relative to source
 files, this is not needed.</para>
         </listitem>
       </varlistentry>
+      
+      <varlistentry>
+        <term><option>-i &lt;dir&gt;</option></term>
+        <listitem>
+          <para>Give path to ignore. Give several -i parameters to ignore several paths. Give directory name or filename with path as parameter. 
+Directory name is matched to all parts of the path.</para>
+        </listitem>
+      </varlistentry>
+            
       <varlistentry>
         <term><option>--inline-suppr</option></term>
         <listitem>
@@ -240,9 +267,9 @@ files, this is not needed.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-j [jobs]</option></term>
+        <term><option>-j &lt;jobs&gt;</option></term>
         <listitem>
-          <para>Start [jobs] threads to do the checking work.</para>
+          <para>Start &lt;jobs&gt; threads to do the checking work.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -253,6 +280,24 @@ files, this is not needed.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term><option>--report-progress</option></term>
+        <listitem>
+          <para>Report progress when checking a file.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--rule=&lt;rule&gt;</option></term>
+        <listitem>
+          <para>Match regular expression to create your own checks. E.g. rule &quot;/ 0&quot; can be used to check division by zero.</para>
+        </listitem>
+      </varlistentry>   
+      <varlistentry>
+        <term><option>--rule-file=&lt;file&gt;</option></term>
+        <listitem>
+          <para>Use given rule XML file. See https://sourceforge.net/projects/cppcheck/files/Articles/ for more info about the syntax.</para>
+        </listitem>
+      </varlistentry>  
+      <varlistentry>
         <term><option>-s</option></term>
         <term><option>--style</option></term>
         <listitem>
@@ -260,23 +305,27 @@ files, this is not needed.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--suppressions [file]</option></term>
+        <term><option>--suppress=&lt;spec&gt;</option></term>
         <listitem>
-          <para>Suppress warnings listed in the file. Filename and line are optional. The format of the single line in file is: [error id]:[filename]:[line]</para>
+          <para>Suppress a specific warning. The format of &lt;spec&gt; is: [error id]:[filename]:[line].
+          The [filename] and [line] are optional.
+          [error id] may be * to suppress all warnings (for a specified file or files).
+          [filename] may contain the wildcard characters * or ?.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--template ['text']</option></term>
+        <term><option>--suppressions-list=&lt;file&gt;</option></term>
+        <listitem>
+          <para>Suppress warnings listed in the file.
+          Each suppression is in the format of &lt;spec&gt; above.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--template '&lt;text&gt;'</option></term>
         <listitem>
           <para>Format the error messages. E.g. '{file}:{line},{severity},{id},{message}' or '{file}({line}):({severity}) {message}'. Pre-defined templates: gcc, vs</para>
         </listitem>
       </varlistentry>
-      <varlistentry>
-       <term><option>--unused-functions</option></term>
-       <listitem>
-        <para>Deprecated, use --enable=unusedFunctions</para>
-       </listitem>
-      </varlistentry>      
       <varlistentry>
         <term><option>-v</option></term>
         <term><option>--verbose</option></term>
@@ -293,14 +342,20 @@ files, this is not needed.</para>
       <varlistentry>
         <term><option>--xml</option></term>
         <listitem>
-          <para>Write results in xml to error stream</para>
+          <para>Write results in XML to error stream</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--xml-version=&lt;version&gt;</option></term>
+        <listitem>
+          <para>Select the XML file version. Currently versions 1 and 2 are available. The default version is 1.</para>
         </listitem>
       </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1 id="author">
     <title>AUTHOR</title>
-    <para>The program was written by Bill Egert, Daniel Marjamäki, Gianluca Scacco, Hoang Tuan Su, Kimmo Varis, Leandro Penz, Nicolas Le Cam, Reijo Tomperi, Slava Semushin and Vesa Pikki</para>
+    <para>The program was written by Daniel Marjamäki and Cppcheck team. See AUTHORS file for list of team members.</para>
   </refsect1>
   <refsect1 id="see_also">
     <title>SEE ALSO</title>

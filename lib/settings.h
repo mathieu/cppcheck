@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,10 +50,21 @@ public:
     Settings();
 
     /** @brief Is --debug given? */
-    bool _debug;
+    bool debug;
 
-    /** @brief Inconclusive checks - for debugging of Cppcheck */
+    /** @brief Is --debug-warnings given? */
+    bool debugwarnings;
+
+    /** @brief Inconclusive checks */
     bool inconclusive;
+
+    /**
+     * When this flag is false (default) then experimental
+     * heuristics and checks are disabled.
+     *
+     * It should not be possible to enable this from any client.
+     */
+    bool experimental;
 
     /** @brief Is --style given? */
     bool _checkCodingStyle;
@@ -82,8 +93,11 @@ public:
     /** @brief Force checking the files with "too many" configurations (--force). */
     bool _force;
 
-    /** @brief write xml results (--xml) */
+    /** @brief write XML results (--xml) */
     bool _xml;
+
+    /** @brief XML version (--xmlver=..) */
+    int _xml_version;
 
     /** @brief How many processes/threads should do checking at the same
         time. Default is 1. (-j N) */
@@ -122,22 +136,73 @@ public:
      * @brief Enable extra checks by id. See isEnabled()
      * @param str single id or list of id values to be enabled
      * or empty string to enable all. e.g. "style,possibleError"
+     * @return error message. empty upon success
      */
-    void addEnabled(const std::string &str);
+    std::string addEnabled(const std::string &str);
 
     /** @brief class for handling suppressions */
     class Suppressions
     {
     private:
+        class FileMatcher
+        {
+            friend class Suppressions;
+        private:
+            /** @brief List of filenames suppressed, bool flag indicates whether suppression matched. */
+            std::map<std::string, std::map<unsigned int, bool> > _files;
+            /** @brief List of globs suppressed, bool flag indicates whether suppression matched. */
+            std::map<std::string, std::map<unsigned int, bool> > _globs;
+
+            /**
+             * @brief Match a name against a glob pattern.
+             * @param pattern The glob pattern to match.
+             * @param name The filename to match against the glob pattern.
+             * @return match success
+             */
+            static bool match(const std::string &pattern, const std::string &name);
+
+        public:
+            /**
+             * @brief Add a file or glob (and line number).
+             * @param name File name or glob pattern
+             * @param line Line number
+             * @return error message. empty upon success
+             */
+            std::string addFile(const std::string &name, unsigned int line);
+
+            /**
+             * @brief Returns true if the file name matches a previously added file or glob pattern.
+             * @param file File name to check
+             * @param line Line number
+             * @return true if this filename/line matches
+             */
+            bool isSuppressed(const std::string &file, unsigned int line);
+
+            /**
+             * @brief Returns true if the file name matches a previously added file (only, not glob pattern).
+             * @param file File name to check
+             * @param line Line number
+             * @return true if this filename/line matches
+             */
+            bool isSuppressedLocal(const std::string &file, unsigned int line);
+        };
+
         /** @brief List of error which the user doesn't want to see. */
-        std::map<std::string, std::map<std::string, std::list<int> > > _suppressions;
+        std::map<std::string, FileMatcher> _suppressions;
     public:
         /**
          * @brief Don't show errors listed in the file.
          * @param istr Open file stream where errors can be read.
-         * @return true on success, false in syntax error is noticed.
+         * @return error message. empty upon success
          */
-        bool parseFile(std::istream &istr);
+        std::string parseFile(std::istream &istr);
+
+        /**
+         * @brief Don't show the given error.
+         * @param line Description of error to suppress (in id:file:line format).
+         * @return error message. empty upon success
+         */
+        std::string addSuppressionLine(const std::string &line);
 
         /**
          * @brief Don't show this error. If file and/or line are optional. In which case
@@ -145,8 +210,9 @@ public:
          * @param errorId the id for the error, e.g. "arrayIndexOutOfBounds"
          * @param file File name with the path, e.g. "src/main.cpp"
          * @param line number, e.g. "123"
+         * @return error message. empty upon success
          */
-        void addSuppression(const std::string &errorId, const std::string &file = "", unsigned int line = 0);
+        std::string addSuppression(const std::string &errorId, const std::string &file = "", unsigned int line = 0);
 
         /**
          * @brief Returns true if this message should not be shown to the user.
@@ -156,6 +222,38 @@ public:
          * @return true if this error is suppressed.
          */
         bool isSuppressed(const std::string &errorId, const std::string &file, unsigned int line);
+
+        /**
+         * @brief Returns true if this message should not be shown to the user (explicit files only, not glob patterns).
+         * @param errorId the id for the error, e.g. "arrayIndexOutOfBounds"
+         * @param file File name with the path, e.g. "src/main.cpp"
+         * @param line number, e.g. "123"
+         * @return true if this error is suppressed.
+         */
+        bool isSuppressedLocal(const std::string &errorId, const std::string &file, unsigned int line);
+
+        struct SuppressionEntry
+        {
+            SuppressionEntry(const std::string &aid, const std::string &afile, const unsigned int &aline)
+                : id(aid), file(afile), line(aline)
+            { }
+
+            std::string id;
+            std::string file;
+            unsigned int line;
+        };
+
+        /**
+         * @brief Returns list of unmatched local (per-file) suppressions.
+         * @return list of unmatched suppressions
+         */
+        std::list<SuppressionEntry> getUnmatchedLocalSuppressions(const std::string &file) const;
+
+        /**
+         * @brief Returns list of unmatched global (glob pattern) suppressions.
+         * @return list of unmatched suppressions
+         */
+        std::list<SuppressionEntry> getUnmatchedGlobalSuppressions() const;
     };
 
     /** @brief suppress message (--suppressions) */
@@ -167,8 +265,44 @@ public:
     /** @brief defines given by the user */
     std::string userDefines;
 
-    /** @brief Experimentat 2 pass checking of files */
+    /** @brief Experimental 2 pass checking of files */
     bool test_2_pass;
+
+    /** @brief --report-progress */
+    bool reportProgress;
+
+    /**
+     * @brief Is there any preprocessor configurations in the source code?
+     * As usual, include guards are not counted.
+     */
+    bool ifcfg;
+
+    /** Rule */
+    class Rule
+    {
+    public:
+        Rule()
+        {
+            // default id
+            id = "rule";
+
+            // default severity
+            severity = "style";
+        }
+
+        std::string pattern;
+        std::string id;
+        std::string severity;
+        std::string summary;
+    };
+
+    /**
+     * @brief Extra rules
+     */
+    std::list<Rule> rules;
+
+    /** Is the 'configuration checking' wanted? */
+    bool checkConfiguration;
 };
 
 /// @}

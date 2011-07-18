@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,22 +45,27 @@ private:
         TEST_CASE(throwIsNotAFunction);
         TEST_CASE(unusedError);
         TEST_CASE(initializationIsNotAFunction);
+
+        TEST_CASE(multipleFiles);   // same function name in multiple files
     }
 
     void check(const char code[])
     {
-        // Tokenize..
-        Tokenizer tokenizer;
-        std::istringstream istr(code);
-        tokenizer.tokenize(istr, "test.cpp");
-
         // Clear the error buffer..
         errout.str("");
 
+        Settings settings;
+        settings._checkCodingStyle = true;
+
+        // Tokenize..
+        Tokenizer tokenizer(&settings, this);
+        std::istringstream istr(code);
+        tokenizer.tokenize(istr, "test.cpp");
+
         // Check for unused functions..
-        CheckUnusedFunctions checkUnusedFunctions(this);
+        CheckUnusedFunctions checkUnusedFunctions(&tokenizer, &settings, this);
         checkUnusedFunctions.parseTokens(tokenizer);
-        checkUnusedFunctions.check();
+        checkUnusedFunctions.check(this);
     }
 
     void incondition()
@@ -178,6 +183,38 @@ private:
               "  B(): N::A() {};\n"
               "};\n");
         ASSERT_EQUALS("", errout.str());
+    }
+
+    void multipleFiles()
+    {
+        CheckUnusedFunctions c;
+
+        // Clear the error buffer..
+        errout.str("");
+
+        const char code[] = "static void f() { }";
+
+        for (int i = 1; i <= 2; ++i)
+        {
+            std::ostringstream fname;
+            fname << "test" << i << ".cpp";
+
+            // Clear the error buffer..
+            errout.str("");
+
+            Settings settings;
+
+            Tokenizer tokenizer(&settings, this);
+            std::istringstream istr(code);
+            tokenizer.tokenize(istr, fname.str().c_str());
+
+            c.parseTokens(tokenizer);
+        }
+
+        // Check for unused functions..
+        c.check(this);
+
+        ASSERT_EQUALS("[test1.cpp:1]: (style) The function 'f' is never used\n",errout.str());
     }
 };
 

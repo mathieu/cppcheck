@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  */
 
 #include "token.h"
+#include "errorlogger.h"
+#include "check.h"
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -34,6 +36,7 @@ Token::Token(Token **t) :
     _isBoolean(false),
     _isUnsigned(false),
     _isSigned(false),
+    _isPointerCompare(false),
     _isLong(false),
     _isUnused(false),
     _varId(0),
@@ -41,7 +44,8 @@ Token::Token(Token **t) :
     _previous(0),
     _link(0),
     _fileIndex(0),
-    _linenr(0)
+    _linenr(0),
+    _progressValue(0)
 {
 }
 
@@ -54,19 +58,22 @@ void Token::str(const std::string &s)
 {
     _str = s;
 
-    _isName = bool(_str[0] == '_' || std::isalpha(_str[0]));
+    if (!_str.empty())
+    {
+        _isName = bool(_str[0] == '_' || std::isalpha(_str[0]));
 
-    if (std::isdigit(_str[0]))
-        _isNumber = true;
-    else if (_str.length() > 1 && _str[0] == '-' && std::isdigit(_str[1]))
-        _isNumber = true;
-    else
-        _isNumber = false;
+        if (std::isdigit(_str[0]))
+            _isNumber = true;
+        else if (_str.length() > 1 && _str[0] == '-' && std::isdigit(_str[1]))
+            _isNumber = true;
+        else
+            _isNumber = false;
 
-    if (_str == "true" || _str == "false")
-        _isBoolean = true;
-    else
-        _isBoolean = false;
+        if (_str == "true" || _str == "false")
+            _isBoolean = true;
+        else
+            _isBoolean = false;
+    }
 
     _varId = 0;
 }
@@ -104,6 +111,10 @@ void Token::deleteThis()
         _isName = _next->_isName;
         _isNumber = _next->_isNumber;
         _isBoolean = _next->_isBoolean;
+        _isUnsigned = _next->_isUnsigned;
+        _isSigned = _next->_isSigned;
+        _isPointerCompare = _next->_isPointerCompare;
+        _isLong = _next->_isLong;
         _isUnused = _next->_isUnused;
         _varId = _next->_varId;
         _fileIndex = _next->_fileIndex;
@@ -194,23 +205,68 @@ std::string Token::strAt(int index) const
     return tok ? tok->_str.c_str() : "";
 }
 
+static bool strisop(const char str[])
+{
+    if (str[1] == 0)
+    {
+        if (strchr("+-*/%&|^~!<>", *str))
+            return true;
+    }
+    else if (str[2] == 0)
+    {
+        if (strcmp(str, "&&")==0 ||
+            strcmp(str, "||")==0 ||
+            strcmp(str, "==")==0 ||
+            strcmp(str, "!=")==0 ||
+            strcmp(str, ">=")==0 ||
+            strcmp(str, "<=")==0 ||
+            strcmp(str, ">>")==0 ||
+            strcmp(str, "<<")==0)
+            return true;
+    }
+    return false;
+}
+
 int Token::multiCompare(const char *haystack, const char *needle)
 {
-    bool emptyStringFound = false;
-    bool noMatch = false;
-    const char *needlePointer = needle;
-    for (; *haystack && *haystack != ' '; ++haystack)
+    if (haystack[0] == '%' && haystack[1] != '|')
     {
-        if (*haystack == '|')
+        if (strncmp(haystack, "%op%|", 5) == 0)
         {
-            if (noMatch)
+            haystack = haystack + 5;
+            if (strisop(needle))
+                return 1;
+        }
+        else if (strncmp(haystack, "%or%|", 5) == 0)
+        {
+            haystack = haystack + 5;
+            if (*needle == '|')
+                return 1;
+        }
+        else if (strncmp(haystack, "%oror%|", 7) == 0)
+        {
+            haystack = haystack + 7;
+            if (needle[0] == '|' && needle[1] == '|')
+                return 1;
+        }
+    }
+
+    bool emptyStringFound = false;
+    const char *needlePointer = needle;
+    while (true)
+    {
+        if (*needlePointer == *haystack)
+        {
+            if (*needlePointer == '\0')
+                return 1;
+            ++needlePointer;
+            ++haystack;
+        }
+        else if (*haystack == '|')
+        {
+            if (*needlePointer == 0)
             {
-                // We didn't have a match at this round
-                noMatch = false;
-            }
-            else if (*needlePointer == 0)
-            {
-                // If needle and haystack are both at the end, we have a match.
+                // If needle is at the end, we have a match.
                 return 1;
             }
             else if (needlePointer == needle)
@@ -221,38 +277,66 @@ int Token::multiCompare(const char *haystack, const char *needle)
             }
 
             needlePointer = needle;
-            continue;
+            ++haystack;
         }
-
-        if (noMatch)
-            continue;
-
+        else if (*haystack == ' ' || *haystack == '\0')
+        {
+            if (needlePointer == needle)
+                return 0;
+            break;
+        }
         // If haystack and needle don't share the same character,
         // find next '|' character.
-        if (*needlePointer != *haystack)
+        else
         {
-            noMatch = true;
-            continue;
-        }
+            needlePointer = needle;
 
-        // All characters in haystack and needle have matched this far
-        ++needlePointer;
+            do
+            {
+                ++haystack;
+            }
+            while (*haystack != ' ' && *haystack != '|' && *haystack);
+
+            if (*haystack == ' ' || *haystack == '\0')
+            {
+                return emptyStringFound ? 0 : -1;
+            }
+
+            ++haystack;
+
+            if (haystack[0] == '%' && haystack[1] != '|')
+            {
+                if (strncmp(haystack, "%op%", 4) == 0)
+                {
+                    if (strisop(needle))
+                        return 1;
+                    haystack = haystack + 4;
+                }
+                else if (strncmp(haystack, "%or%", 4) == 0)
+                {
+                    if (*needle == '|')
+                        return 1;
+                    haystack = haystack + 4;
+                }
+                else if (strncmp(haystack, "%oror%", 6) == 0)
+                {
+                    if (needle[0] == '|' && needle[1] == '|')
+                        return 1;
+                    haystack = haystack + 6;
+                }
+
+                if (*haystack == '|')
+                    haystack++;
+                else if (*haystack == ' ' || *haystack == '\0')
+                    return emptyStringFound ? 0 : -1;
+                else
+                    return -1;
+            }
+        }
     }
 
-
-    if (!noMatch)
-    {
-        if (*needlePointer == 0)
-        {
-            // If both needle and haystack are at the end, then we have a match.
-            return 1;
-        }
-        else if (needlePointer == needle)
-        {
-            // Last string in haystack was empty string e.g. "one|two|"
-            return 0;
-        }
-    }
+    if (*needlePointer == '\0')
+        return 1;
 
     // If empty string was found earlier from the haystack
     if (emptyStringFound)
@@ -294,10 +378,12 @@ int Token::firstWordEquals(const char *str, const char *word)
 {
     for (;;)
     {
-        if (*str == ' ' && *word == 0)
-            return 0;
-        else if (*str != *word)
+        if (*str != *word)
+        {
+            if (*str == ' ' && *word == 0)
+                return 0;
             return 1;
+        }
         else if (*str == 0)
             break;
 
@@ -341,17 +427,8 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
 {
     const char *p = pattern;
     bool firstpattern = true;
-    bool first = true;
     while (*p)
     {
-        if (!first)
-        {
-            while (*p && *p != ' ')
-                ++p;
-        }
-
-        first = false;
-
         // Skip spaces in pattern..
         while (*p == ' ')
             ++p;
@@ -364,36 +441,66 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
         {
             // If we have no tokens, pattern "!!else" should return true
             if (p[1] == '!' && p[0] == '!' && p[2] != '\0')
+            {
+                while (*p && *p != ' ')
+                    ++p;
                 continue;
+            }
             else
                 return false;
         }
 
         // If we are in the first token, we skip all initial !! patterns
         if (firstpattern && !tok->previous() && tok->next() && p[1] == '!' && p[0] == '!' && p[2] != '\0')
+        {
+            while (*p && *p != ' ')
+                ++p;
             continue;
+        }
 
         firstpattern = false;
 
         // Compare the first character of the string for optimization reasons
         // before doing more detailed checks.
-        bool patternIdentified = false;
+        bool patternUnderstood = false;
         if (p[0] == '%')
         {
-            // TODO: %var% should match only for
-            // variables that have varId != 0, but that needs a lot of
-            // work, before that change can be made.
-            // Any symbolname..
-            if (firstWordEquals(p, "%var%") == 0)
+            switch (p[1])
             {
-                if (!tok->isName())
-                    return false;
+            case 'v':
+                // TODO: %var% should match only for
+                // variables that have varId != 0, but that needs a lot of
+                // work, before that change can be made.
+                // Any symbolname..
+                if (p[4] == '%') // %var%
+                {
+                    if (!tok->isName())
+                        return false;
+                    p += 5;
+                    patternUnderstood = true;
+                }
+                else // %varid%
+                {
+                    if (varid == 0)
+                    {
+                        std::list<ErrorLogger::ErrorMessage::FileLocation> locationList;
+                        const ErrorLogger::ErrorMessage errmsg(locationList,
+                                                               Severity::error,
+                                                               "Internal error. Token::Match called with varid 0.",
+                                                               "cppcheckError",
+                                                               false);
+                        Check::reportError(errmsg);
+                    }
 
-                patternIdentified = true;
-            }
+                    if (tok->varId() != varid)
+                        return false;
 
-            // Type..
-            else if (firstWordEquals(p, "%type%") == 0)
+                    p += 7;
+                    patternUnderstood = true;
+                }
+                break;
+            case 't':
+                // Type (%type%)
             {
                 if (!tok->isName())
                     return false;
@@ -404,63 +511,121 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
                 if (tok->str() == "delete")
                     return false;
 
-                patternIdentified = true;
+                p += 6;
+                patternUnderstood = true;
             }
-
-            // Accept any token
-            else if (firstWordEquals(p, "%any%") == 0)
+            break;
+            case 'a':
+                // Accept any token (%any%)
             {
-                patternIdentified = true;
+                p += 5;
+                patternUnderstood = true;
             }
-
-            else if (firstWordEquals(p, "%varid%") == 0)
-            {
-                if (varid == 0)
-                {
-                    // TODO: Report this through ErrorLogger instead so these messages appear in the unit testing
-                    std::cerr << "\n###### If you see this, there is a bug ######" << std::endl
-                              << "Token::Match(\"" << pattern << "\", 0)" << std::endl;
-                }
-
-                if (tok->varId() != varid)
-                    return false;
-
-                patternIdentified = true;
-            }
-
-            else if (firstWordEquals(p, "%num%") == 0)
+            break;
+            case 'n':
+                // Number (%num)
             {
                 if (!tok->isNumber())
                     return false;
-
-                patternIdentified = true;
+                p += 5;
+                patternUnderstood = true;
             }
-
-            else if (firstWordEquals(p, "%bool%") == 0)
-            {
-                if (!tok->isBoolean())
-                    return false;
-
-                patternIdentified = true;
-            }
-
-            else if (firstWordEquals(p, "%str%") == 0)
+            break;
+            case 's':
+                // String (%str%)
             {
                 if (tok->_str[0] != '\"')
                     return false;
-
-                patternIdentified = true;
+                p += 5;
+                patternUnderstood = true;
             }
-        }
+            break;
+            case 'b':
+                // Bool (%bool%)
+            {
+                if (!tok->isBoolean())
+                    return false;
+                p += 6;
+                patternUnderstood = true;
+            }
+            break;
+            case 'o':
+                // Or (%or%) and Op (%op%)
+                if (p[3] == '%')
+                {
+                    patternUnderstood = true;
 
-        if (patternIdentified)
-        {
-            // Pattern was identified already above.
+                    // multicompare..
+                    if (p[4] == '|')
+                    {
+                        int result = multiCompare(p, tok->str().c_str());
+                        if (result == -1)
+                            return false;   // No match
+                    }
+
+                    // single compare..
+                    else if (p[2] == 'r')
+                    {
+                        if (tok->str() != "|")
+                            return false;
+                    }
+                    else if (p[3] == 'p')
+                    {
+                        if (!tok->isOp())
+                            return false;
+                    }
+                    else
+                        patternUnderstood = false;
+                }
+
+                // Oror (%oror%)
+                else
+                {
+                    // multicompare..
+                    if (p[5] == '|')
+                    {
+                        int result = multiCompare(p, tok->str().c_str());
+                        if (result == -1)
+                            return false;   // No match
+                    }
+
+                    // single compare..
+                    if (tok->str() != "||")
+                        return false;
+
+                    patternUnderstood = true;
+                }
+
+                if (patternUnderstood)
+                {
+                    while (*p && *p != ' ')
+                        p++;
+                }
+                break;
+            default:
+                if (firstWordEquals(p, tok->_str.c_str()))
+                {
+                    p += tok->_str.length();
+                    patternUnderstood = true;
+                }
+                break;
+            }
+
+            if (!patternUnderstood)
+            {
+                return false;
+            }
+
+            tok = tok->next();
+            continue;
         }
 
         // [.. => search for a one-character token..
-        else if (p[0] == '[' && chrInFirstWord(p, ']') && tok->_str.length() == 1)
+        else if (p[0] == '[' && chrInFirstWord(p, ']'))
         {
+            if (tok->_str.length() != 1)
+                return false;
+
             const char *temp = p + 1;
             bool chrFound = false;
             int count = 0;
@@ -499,6 +664,8 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
             if (res == 0)
             {
                 // Empty alternative matches, use the same token on next round
+                while (*p && *p != ' ')
+                    ++p;
                 continue;
             }
             else if (res == -1)
@@ -516,7 +683,12 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
         }
 
         else if (firstWordEquals(p, tok->_str.c_str()) != 0)
+        {
             return false;
+        }
+
+        while (*p && *p != ' ')
+            ++p;
 
         tok = tok->next();
     }
@@ -554,16 +726,7 @@ size_t Token::getStrLength(const Token *tok)
 bool Token::isStandardType() const
 {
     bool ret = false;
-    const char *type[] = {"bool", "char", "short", "int", "long", "float", "double", "size_t", "__int64", 0};
-    for (int i = 0; type[i]; i++)
-        ret |= (_str == type[i]);
-    return ret;
-}
-
-bool Token::isIntegerType() const
-{
-    bool ret = false;
-    const char *type[] = {"char", "short", "int", "long", "size_t", "__int64", 0};
+    const char *type[] = {"bool", "char", "short", "int", "long", "float", "double", "size_t", 0};
     for (int i = 0; type[i]; i++)
         ret |= (_str == type[i]);
     return ret;
@@ -584,6 +747,10 @@ void Token::move(Token *srcStart, Token *srcEnd, Token *newLocation)
     // Fix the tokens at newLocation
     newLocation->next()->previous(srcEnd);
     newLocation->next(srcStart);
+
+    // Update _progressValue
+    for (Token *tok = srcStart; tok && tok != srcEnd; tok = tok->next())
+        tok->_progressValue = newLocation->_progressValue;
 }
 
 //---------------------------------------------------------------------------
@@ -598,12 +765,23 @@ const Token *Token::findmatch(const Token *tok, const char pattern[], unsigned i
     return 0;
 }
 
+const Token *Token::findmatch(const Token *tok, const char pattern[], const Token *end, unsigned int varId)
+{
+    for (; tok && tok != end; tok = tok->next())
+    {
+        if (Token::Match(tok, pattern, varId))
+            return tok;
+    }
+    return 0;
+}
+
 void Token::insertToken(const std::string &tokenStr)
 {
     Token *newToken = new Token(tokensBack);
     newToken->str(tokenStr);
     newToken->_linenr = _linenr;
     newToken->_fileIndex = _fileIndex;
+    newToken->_progressValue = _progressValue;
     if (this->next())
     {
         newToken->next(this->next());
@@ -663,7 +841,7 @@ std::string Token::stringifyList(bool varid, const char *title, const std::vecto
 
     unsigned int lineNumber = 0;
     int fileInd = -1;
-    std::map<unsigned int, unsigned int> lineNumbers;
+    std::map<int, unsigned int> lineNumbers;
     for (const Token *tok = this; tok; tok = tok->next())
     {
         bool fileChange = false;
@@ -676,8 +854,8 @@ std::string Token::stringifyList(bool varid, const char *title, const std::vecto
 
             fileInd = static_cast<int>(tok->_fileIndex);
             ret << "\n\n##file ";
-            if (fileNames.size() > static_cast<unsigned int>(fileInd))
-                ret << fileNames.at(fileInd);
+            if (fileNames.size() > tok->_fileIndex)
+                ret << fileNames.at(tok->_fileIndex);
             else
                 ret << fileInd;
 

@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,11 +25,17 @@
 #include <QStandardItem>
 #include <QSettings>
 #include <QContextMenuEvent>
+#include <QTextStream>
 #include "common.h"
 #include "applicationlist.h"
-#include <QTextStream>
+#include "errorlogger.h" // Severity
 
 class Report;
+class ErrorItem;
+class ErrorLine;
+class QModelIndex;
+class QWidget;
+class QItemSelectionModel;
 
 /// @addtogroup GUI
 /// @{
@@ -50,19 +56,9 @@ public:
     /**
     * @brief Add a new item to the tree
     *
-    * @param file filename
-    * @param severity error severity
-    * @param message error message
-    * @param files list of files affected by the error
-    * @param lines list of file line numers affected by the error
-    * @param id error id
+    * @param item Error item data
     */
-    void AddErrorItem(const QString &file,
-                      const QString &severity,
-                      const QString &message,
-                      const QStringList &files,
-                      const QVariantList &lines,
-                      const QString &id);
+    void AddErrorItem(const ErrorItem &item);
 
     /**
     * @brief Clear all errors from the tree
@@ -78,6 +74,19 @@ public:
     * @param show Should specified errors be shown (true) or hidden (false)
     */
     void ShowResults(ShowTypes type, bool show);
+
+    /**
+    * @brief Function to filter the displayed list of errors.
+    * Refreshes the tree.
+    *
+    * @param filter String that must be found in the summary, description, file or id
+    */
+    void FilterResults(const QString& filter);
+
+    /**
+    * @brief Function to show results that were previous hidden with HideResult()
+    */
+    void ShowHiddenResults();
 
     /**
     * @brief Save results to a text stream
@@ -125,6 +134,29 @@ public:
     *
     */
     void Translate();
+
+    /**
+    * @brief Convert severity string to ShowTypes value
+    * @param severity Error severity
+    * @return Severity converted to ShowTypes value
+    */
+    static ShowTypes SeverityToShowType(Severity::SeverityType severity);
+
+signals:
+    /**
+    * @brief Signal that results have been hidden or shown
+    *
+    * @param hidden true if there are some hidden results, or false if there are not
+    */
+    void ResultsHidden(bool hidden);
+
+    /**
+    * @brief Signal for selection change in result tree.
+    *
+    * @param index Model index to specify new selected item.
+    */
+    void SelectionChanged(const QModelIndex &current);
+
 protected slots:
     /**
     * @brief Slot to quickstart an error with default application
@@ -157,6 +189,20 @@ protected slots:
     *
     */
     void CopyMessage();
+
+    /**
+    * @brief Slot for context menu item to hide the current error message
+    *
+    */
+    void HideResult();
+
+    /**
+    * @brief Slot for selection change in the results tree.
+    *
+    * @param index Model index to specify new selected item.
+    * @param index Model index to specify previous selected item.
+    */
+    virtual void currentChanged(const QModelIndex &current, const QModelIndex &previous);
 
 protected:
 
@@ -193,17 +239,18 @@ protected:
     /**
     * @brief Convert a severity string to a icon filename
     *
-    * @param severity Severity string
+    * @param severity Severity
     */
-    QString SeverityToIcon(const QString &severity);
+    QString SeverityToIcon(Severity::SeverityType severity) const;
 
     /**
     * @brief Helper function to open an error within target with application*
     *
     * @param target Error tree item to open
-    * @param application Index of the application to open with
+    * @param application Index of the application to open with. Giving -1
+    *  (default value) will open the default application.
     */
-    void StartApplication(QStandardItem *target, int application);
+    void StartApplication(QStandardItem *target, int application = -1);
 
     /**
     * @brief Helper function to copy filename/full path to the clipboard
@@ -224,19 +271,13 @@ protected:
     * @brief Add a new error item beneath a file or a backtrace item beneath an error
     *
     * @param parent Parent for the item. Either a file item or an error item
-    * @param file Filename of the error
-    * @param line Line numer
-    * @param severity Error severity
-    * @param message Error message
+    * @param item Error line data
     * @param hide Should this be hidden (true) or shown (false)
     * @param icon Should a default backtrace item icon be added
     * @return newly created QStandardItem *
     */
     QStandardItem *AddBacktraceFiles(QStandardItem *parent,
-                                     const QString &file,
-                                     const int line,
-                                     const QString &severity,
-                                     const QString &message,
+                                     const ErrorLine &item,
                                      const bool hide,
                                      const QString &icon);
 
@@ -257,18 +298,18 @@ protected:
     ShowTypes VariantToShowType(const QVariant &data);
 
     /**
-    * @brief Convert severity string to ShowTypes value
-    * @param severity Error severity string
-    * @return Severity converted to ShowTypes value
-    */
-    ShowTypes SeverityToShowType(const QString &severity);
-
-    /**
     * @brief Convert ShowType to severity string
     * @param type ShowType to convert
-    * @return ShowType converted to string
+    * @return ShowType converted to severity
     */
-    QString ShowTypeToString(ShowTypes type);
+    Severity::SeverityType ShowTypeToSeverity(ShowTypes type);
+
+    /**
+    * @brief Convert Severity to translated string for GUI.
+    * @param type Severity to convert
+    * @return Severity as translated string
+    */
+    QString SeverityToTranslatedString(Severity::SeverityType severity);
 
     /**
     * @brief Load all settings
@@ -276,14 +317,30 @@ protected:
     */
     void LoadSettings();
 
+    /**
+    * @brief Ask directory where file is located.
+    * @param file File name.
+    * @return Directory user chose.
+    */
+    QString AskFileDir(const QString &file);
 
     /**
-    * @brief Create a new QStandardItem
+    * @brief Create new normal item.
     *
+    * Normal item has left alignment and text set also as tooltip.
     * @param name name for the item
     * @return new QStandardItem
     */
-    QStandardItem *CreateItem(const QString &name);
+    QStandardItem *CreateNormalItem(const QString &name);
+
+    /**
+    * @brief Create new line number item.
+    *
+    * Line number item has right align and text set as tooltip.
+    * @param name name for the item
+    * @return new QStandardItem
+    */
+    QStandardItem *CreateLineNumberItem(const QString &linenumber);
 
     /**
     * @brief Finds a file item
@@ -330,6 +387,12 @@ protected:
     bool mShowTypes[SHOW_NONE];
 
     /**
+    * @brief A string used to filter the results for display.
+    *
+    */
+    QString mFilter;
+
+    /**
     * @brief List of applications to open errors with
     *
     */
@@ -372,6 +435,7 @@ protected:
     bool mVisibleErrors;
 
 private:
+    QItemSelectionModel *mSelectionModel;
 };
 /// @}
 #endif // RESULTSTREE_H

@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
  */
 
 #include "check.h"
+#include "symboldatabase.h"
 
 #include <list>
 #include <string>
@@ -71,7 +72,7 @@ private:
      * @param id type of message
      * @param msg text
      */
-    void reportErr(const Token *location, Severity::e severity, const std::string &id, const std::string &msg) const;
+    void reportErr(const Token *location, Severity::SeverityType severity, const std::string &id, const std::string &msg) const;
 
     /**
      * Report error. Similar with the function Check::reportError
@@ -80,7 +81,7 @@ private:
      * @param id type of message
      * @param msg text
      */
-    void reportErr(const std::list<const Token *> &callstack, Severity::e severity, const std::string &id, const std::string &msg) const;
+    void reportErr(const std::list<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg) const;
 
 public:
     CheckMemoryLeak(const Tokenizer *t, ErrorLogger *e)
@@ -97,10 +98,10 @@ public:
     /**
      * @brief Get type of deallocation at given position
      * @param tok position
-     * @param varnames variable names
+     * @param varname variable name
      * @return type of deallocation
      */
-    AllocType getDeallocationType(const Token *tok, const char *varnames[]) const;
+    AllocType getDeallocationType(const Token *tok, const std::string &varname) const;
 
     /**
      * @brief Get type of deallocation at given position
@@ -113,7 +114,7 @@ public:
     /**
      * @brief Get type of allocation at given position
      */
-    AllocType getAllocationType(const Token *tok2, unsigned int varid) const;
+    AllocType getAllocationType(const Token *tok2, unsigned int varid, std::list<const Token *> *callstack = NULL) const;
 
     /**
      * @brief Get type of reallocation at given position
@@ -126,7 +127,7 @@ public:
      * @param typestr type name
      * @return true if the type name is the name of a class
      */
-    bool isclass(const Tokenizer *_tokenizer, const Token *typestr) const;
+    bool isclass(const Tokenizer *_tokenizer, const Token *typestr, unsigned int varid) const;
 
     void memleakError(const Token *tok, const std::string &varname);
     void resourceLeakError(const Token *tok, const std::string &varname);
@@ -143,7 +144,7 @@ public:
     void memleakUponReallocFailureError(const Token *tok, const std::string &varname);
 
     /** What type of allocated memory does the given function return? */
-    AllocType functionReturnType(const Token *tok) const;
+    AllocType functionReturnType(const Token *tok, std::list<const Token *> *callstack = NULL) const;
 
     /** Function allocates pointed-to argument (a la asprintf)? */
     const char *functionArgAlloc(const Token *tok, unsigned int targetpar, AllocType &allocType) const;
@@ -171,17 +172,30 @@ class CheckMemoryLeakInFunction : private Check, public CheckMemoryLeak
 {
 public:
     /** @brief This constructor is used when registering this class */
-    CheckMemoryLeakInFunction() : Check(), CheckMemoryLeak(0, 0)
+    CheckMemoryLeakInFunction() : Check(myName()), CheckMemoryLeak(0, 0), symbolDatabase(NULL)
     { }
 
     /** @brief This constructor is used when running checks */
     CheckMemoryLeakInFunction(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
-        : Check(tokenizr, settings, errLog), CheckMemoryLeak(tokenizr, errLog)
-    { }
+        : Check(myName(), tokenizr, settings, errLog), CheckMemoryLeak(tokenizr, errLog)
+    {
+        // get the symbol database
+        if (tokenizr)
+            symbolDatabase = tokenizr->getSymbolDatabase();
+        else
+            symbolDatabase = 0;
+    }
 
     /** @brief run all simplified checks */
     void runSimplifiedChecks(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
     {
+        // Don't use these check for Java and C# programs..
+        if (tokenizr->getFiles()->at(0).find(".java") != std::string::npos ||
+            tokenizr->getFiles()->at(0).find(".cs") != std::string::npos)
+        {
+            return;
+        }
+
         CheckMemoryLeakInFunction checkMemoryLeak(tokenizr, settings, errLog);
         checkMemoryLeak.checkReallocUsage();
         checkMemoryLeak.check();
@@ -192,9 +206,6 @@ public:
 
     /** @brief Perform checking */
     void check();
-
-    /** @brief experimental: checking via ExecutionPath */
-    void localleaks();
 
     /**
      * Checking for a memory leak caused by improper realloc usage.
@@ -299,24 +310,26 @@ public:
     void checkScope(const Token *Tok1, const std::string &varname, unsigned int varid, bool classmember, unsigned int sz);
 
     /** Report all possible errors (for the --errorlist) */
-    void getErrorMessages()
+    void getErrorMessages(ErrorLogger *e, const Settings *settings)
     {
-        memleakError(0, "varname");
-        resourceLeakError(0, "varname");
+        CheckMemoryLeakInFunction c(0, settings, e);
 
-        deallocDeallocError(0, "varname");
-        deallocuseError(0, "varname");
-        mismatchSizeError(0, "sz");
+        c.memleakError(0, "varname");
+        c.resourceLeakError(0, "varname");
+
+        c.deallocDeallocError(0, "varname");
+        c.deallocuseError(0, "varname");
+        c.mismatchSizeError(0, "sz");
         std::list<const Token *> callstack;
-        mismatchAllocDealloc(callstack, "varname");
-        memleakUponReallocFailureError(0, "varname");
+        c.mismatchAllocDealloc(callstack, "varname");
+        c.memleakUponReallocFailureError(0, "varname");
     }
 
     /**
      * Get name of class (--doc)
      * @return name of class
      */
-    std::string name() const
+    std::string myName() const
     {
         return "Memory leaks (function variables)";
     }
@@ -335,6 +348,11 @@ public:
 
     /** Function names for functions that are "noreturn" */
     std::set<std::string> noreturn;
+
+    /** Function names for functions that are not "noreturn" */
+    std::set<std::string> notnoreturn;
+
+    const SymbolDatabase *symbolDatabase;
 };
 
 
@@ -346,15 +364,22 @@ public:
 class CheckMemoryLeakInClass : private Check, private CheckMemoryLeak
 {
 public:
-    CheckMemoryLeakInClass() : Check(), CheckMemoryLeak(0, 0)
+    CheckMemoryLeakInClass() : Check(myName()), CheckMemoryLeak(0, 0)
     { }
 
     CheckMemoryLeakInClass(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
-        : Check(tokenizr, settings, errLog), CheckMemoryLeak(tokenizr, errLog)
+        : Check(myName(), tokenizr, settings, errLog), CheckMemoryLeak(tokenizr, errLog)
     { }
 
     void runSimplifiedChecks(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
     {
+        // Don't use these check for Java and C# programs..
+        if (tokenizr->getFiles()->at(0).find(".java") != std::string::npos ||
+            tokenizr->getFiles()->at(0).find(".cs") != std::string::npos)
+        {
+            return;
+        }
+
         CheckMemoryLeakInClass checkMemoryLeak(tokenizr, settings, errLog);
         checkMemoryLeak.check();
     }
@@ -362,17 +387,16 @@ public:
     void check();
 
 private:
-    void parseClass(const Token *tok1, std::vector<std::string> &classname);
-    void variable(const std::string &classname, const Token *tokVarname);
+    void variable(const Scope *scope, const Token *tokVarname);
 
     /** Public functions: possible double-allocation */
-    void checkPublicFunctions(const Token *classtok, const unsigned int varid);
+    void checkPublicFunctions(const Scope *scope, const Token *classtok);
     void publicAllocationError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages()
+    void getErrorMessages(ErrorLogger * /*errorLogger*/, const Settings * /*settings*/)
     { }
 
-    std::string name() const
+    std::string myName() const
     {
         return "Memory leaks (class variables)";
     }
@@ -390,11 +414,11 @@ private:
 class CheckMemoryLeakStructMember : private Check, private CheckMemoryLeak
 {
 public:
-    CheckMemoryLeakStructMember() : Check(), CheckMemoryLeak(0, 0)
+    CheckMemoryLeakStructMember() : Check(myName()), CheckMemoryLeak(0, 0)
     { }
 
     CheckMemoryLeakStructMember(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
-        : Check(tokenizr, settings, errLog), CheckMemoryLeak(tokenizr, errLog)
+        : Check(myName(), tokenizr, settings, errLog), CheckMemoryLeak(tokenizr, errLog)
     { }
 
     void runSimplifiedChecks(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
@@ -407,10 +431,15 @@ public:
 
 private:
 
-    void getErrorMessages()
+    /** Is local variable allocated with malloc? */
+    static bool isMalloc(const Token *vartok);
+
+    void checkStructVariable(const Token * const vartok);
+
+    void getErrorMessages(ErrorLogger * /*errorLogger*/, const Settings * /*settings*/)
     { }
 
-    std::string name() const
+    std::string myName() const
     {
         return "Memory leaks (struct members)";
     }
@@ -418,6 +447,46 @@ private:
     std::string classInfo() const
     {
         return "Don't forget to deallocate struct members";
+    }
+};
+
+
+
+/** @brief detect simple memory leaks (address not taken) */
+
+class CheckMemoryLeakNoVar : private Check, private CheckMemoryLeak
+{
+public:
+    CheckMemoryLeakNoVar() : Check(myName()), CheckMemoryLeak(0, 0)
+    { }
+
+    CheckMemoryLeakNoVar(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
+        : Check(myName(), tokenizr, settings, errLog), CheckMemoryLeak(tokenizr, errLog)
+    { }
+
+    void runSimplifiedChecks(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog)
+    {
+        CheckMemoryLeakNoVar checkMemoryLeak(tokenizr, settings, errLog);
+        checkMemoryLeak.check();
+    }
+
+    void check();
+
+private:
+
+    void functionCallLeak(const Token *loc, const std::string &alloc, const std::string &functionCall);
+
+    void getErrorMessages(ErrorLogger * /*errorLogger*/, const Settings * /*settings*/)
+    { }
+
+    std::string myName() const
+    {
+        return "Memory leaks (address not taken)";
+    }
+
+    std::string classInfo() const
+    {
+        return "Not taking the address to allocated memory";
     }
 };
 /// @}

@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,8 @@
 */
 class TxtReport : public Report
 {
+    Q_OBJECT
+
 public:
     TxtReport(const QString &filename, QObject * parent = 0);
     virtual ~TxtReport();
@@ -58,10 +60,9 @@ public:
 
     /**
     * @brief Write error to report.
+    * @param error Error data.
     */
-    virtual void WriteError(const QStringList &files, const QStringList &lines,
-                            const QString &id, const QString &severity,
-                            const QString &msg);
+    virtual void WriteError(const ErrorItem &error);
 
 private:
 

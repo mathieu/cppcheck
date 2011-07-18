@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 
 #include <QObject>
 #include <QStringList>
+#include <QTime>
 #include "../lib/settings.h"
 #include "../lib/cppcheck.h"
 #include "threadresult.h"
@@ -85,9 +86,9 @@ public:
     * @brief Start the threads to check the files
     *
     * @param settings Settings for checking
-    * @param recheck Should we reuse the files we checked earleir
+    * @param recheck Should we reuse the files we checked earlier
     */
-    void Check(Settings settings, bool recheck);
+    void Check(const Settings &settings, bool recheck);
 
     /**
     * @brief Is checking running?
@@ -102,6 +103,20 @@ public:
     * @return true check has been previously run and recheck can be done
     */
     bool HasPreviousFiles() const;
+
+    /**
+    * @brief Return count of files we checked last time.
+    *
+    * @return count of files that were checked last time.
+    */
+    int GetPreviousFilesCount() const;
+
+    /**
+    * @brief Return the time elapsed while scanning the previous time.
+    *
+    * @return the time elapsed in milliseconds.
+    */
+    int GetPreviousScanDuration() const;
 
 signals:
     /**
@@ -132,6 +147,18 @@ protected:
     *
     */
     QStringList mLastFiles;
+
+    /**
+    * @brief Timer used for measuring scan duration
+    *
+    */
+    QTime mTime;
+
+    /**
+    * @brief The previous scan duration in milliseconds.
+    *
+    */
+    int mScanDuration;
 
     /**
     * @brief Function to delete all threads

@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,13 @@
 
 #include <cstdlib>
 #include "testsuite.h"
+#include "options.h"
 
 int main(int argc, const char *argv[])
 {
-    size_t ret = TestFixture::runTests((argc == 2) ? argv[1] : NULL);
+    options args(argc, argv);
+
+    size_t ret = TestFixture::runTests(args);
 
     return (ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }

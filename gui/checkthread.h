@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ public:
     *
     * @param settings settings for cppcheck
     */
-    void Check(Settings settings);
+    void Check(const Settings &settings);
 
     /**
     * @brief method that is run in a thread
@@ -71,7 +71,7 @@ protected:
     * Whole purpose of these states is to allow stopping of the checking. When
     * stopping we say for the thread (Stopping) that stop when current check
     * has been completed. Thread must be stopped cleanly, just terminating thread
-    * likely causes unpredictable side-effedts.
+    * likely causes unpredictable side-effects.
     */
     enum State
     {

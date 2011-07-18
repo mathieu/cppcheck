@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 //---------------------------------------------------------------------------
 #include "checkexceptionsafety.h"
 
-#include "tokenize.h"
 #include "token.h"
-#include "errorlogger.h"
 
 //---------------------------------------------------------------------------
 
@@ -43,9 +41,11 @@ void CheckExceptionSafety::destructors()
     // Perform check..
     for (const Token * tok = _tokenizer->tokens(); tok; tok = tok->next())
     {
+        // Skip executable scopes
         if (Token::simpleMatch(tok, ") {"))
             tok = tok->next()->link();
 
+        // only looking for destructors
         if (!Token::Match(tok, "~ %var% ( ) {"))
             continue;
 
@@ -65,6 +65,7 @@ void CheckExceptionSafety::destructors()
                 --indentlevel;
             }
 
+            // throw found within a destructor
             else if (tok2->str() == "throw")
             {
                 destructorsError(tok2);
@@ -75,222 +76,15 @@ void CheckExceptionSafety::destructors()
 }
 
 
-void CheckExceptionSafety::unsafeNew()
-{
-    if (!_settings->isEnabled("exceptNew"))
-        return;
-
-    // Inspect initializer lists..
-    for (const Token *tok = _tokenizer->tokens(); tok; tok = tok->next())
-    {
-        if (tok->str() != ")")
-            continue;
-        tok = tok->next();
-        if (!tok)
-            break;
-        if (tok->str() != ":")
-            continue;
-
-        // multiple "new" in an initializer list..
-        std::string varname;
-        for (tok = tok->next(); tok; tok = tok->next())
-        {
-            if (!Token::Match(tok, "%var% ("))
-                break;
-            tok = tok->next();
-            if (Token::Match(tok->next(), "new %type%"))
-            {
-                if (!varname.empty())
-                {
-                    unsafeNewError(tok->previous(), varname);
-                    break;
-                }
-                /*
-                // TODO: check if class is autodeallocated+might throw exception in constructor
-                if (!_settings->isAutoDealloc(tok->strAt(2)))
-                {
-                    varname = tok->strAt(-1);
-                }
-                */
-            }
-            tok = tok->link();
-            tok = tok ? tok->next() : 0;
-            if (!tok)
-                break;
-            if (tok->str() != ",")
-                break;
-        }
-        if (!tok)
-            break;
-    }
-
-
-    // Inspect constructors..
-    for (const Token *tok = _tokenizer->tokens(); tok; tok = tok->next())
-    {
-        // match this pattern.. "C :: C ( .. ) {"
-        if (!tok->next() || tok->next()->str() != "::")
-            continue;
-        if (!Token::Match(tok, "%var% :: %var% ("))
-            continue;
-        if (tok->str() != tok->strAt(2))
-            continue;
-        if (!Token::simpleMatch(tok->tokAt(3)->link(), ") {"))
-            continue;
-
-        // inspect the constructor..
-        std::string varname;
-        for (tok = tok->tokAt(3)->link()->tokAt(2); tok; tok = tok->next())
-        {
-            if (tok->str() == "{" || tok->str() == "}")
-                break;
-            // some variable declaration..
-            if (Token::Match(tok->previous(), "[{;] %type% * %var% ;"))
-                break;
-            // allocating with new..
-            if (Token::Match(tok, "%var% = new %type%"))
-            {
-                if (!varname.empty())
-                {
-                    unsafeNewError(tok, varname);
-                    break;
-                }
-                /*
-                TODO: check is class is autodeallocated + might throw exceptions in the constructor
-                if (!_settings->isAutoDealloc(tok->strAt(3)))
-                    varname = tok->str();
-                */
-            }
-        }
-    }
-
-    // allocating multiple local variables..
-    std::set<unsigned int> localVars;
-    std::string varname;
-    for (const Token *tok = _tokenizer->tokens(); tok; tok = tok->next())
-    {
-        if (tok->str() == "{" || tok->str() == "}")
-        {
-            localVars.clear();
-            varname = "";
-        }
-
-        if (Token::Match(tok, "[;{}] %type% * %var% ;") &&
-            tok->tokAt(1)->isStandardType())
-        {
-            tok = tok->tokAt(3);
-            if (tok->varId())
-                localVars.insert(tok->varId());
-        }
-
-        if (Token::Match(tok, "[;{}] %var% = new %type%"))
-        {
-            if (!varname.empty())
-            {
-                unsafeNewError(tok->next(), varname);
-                break;
-            }
-            if (tok->next()->varId() && localVars.find(tok->next()->varId()) != localVars.end())
-                varname = tok->strAt(1);
-        }
-
-        else if (Token::Match(tok, "[;{}] %var% ("))
-        {
-            // False negatives: we don't handle switch cases properly so we just bail out.
-            if (tok->strAt(1) == "switch")
-                break;
-
-            for (tok = tok->next(); tok && !Token::Match(tok, "[;{}]"); tok = tok->next())
-            {
-                if (tok->str() == varname)
-                {
-                    varname = "";
-                }
-            }
-            if (!tok)
-                break;
-        }
-
-        else if (tok->str() == "delete")
-        {
-            if (Token::simpleMatch(tok->next(), varname.c_str()) ||
-                Token::simpleMatch(tok->next(), ("[ ] " + varname).c_str()))
-            {
-                varname = "";
-            }
-        }
-    }
-}
-
-
-void CheckExceptionSafety::realloc()
-{
-    if (!_settings->isEnabled("exceptRealloc"))
-        return;
-
-    for (const Token *tok = _tokenizer->tokens(); tok; tok = tok->next())
-    {
-        if (Token::simpleMatch(tok, "try {"))
-        {
-            tok = tok->next()->link();
-            if (!tok)
-                break;
-        }
-
-        if (!Token::Match(tok, "[{};] delete"))
-            continue;
-
-        tok = tok->tokAt(2);
-        if (Token::simpleMatch(tok, "[ ]"))
-            tok = tok->tokAt(2);
-        if (!tok)
-            break;
-
-        // reallocating..
-        if (!Token::Match(tok, "%var% ; %var% = new %type%"))
-            continue;
-
-        // variable id of deallocated pointer..
-        const unsigned int varid(tok->varId());
-        if (varid == 0)
-            continue;
-
-        // variable id of allocated pointer must match..
-        if (varid != tok->tokAt(2)->varId())
-            continue;
-
-        // is is a class member variable..
-        const Token *tok1 = Token::findmatch(_tokenizer->tokens(), "%varid%", varid);
-        while (0 != (tok1 = tok1 ? tok1->previous() : 0))
-        {
-            if (tok1->str() == "}")
-                tok1 = tok1->link();
-            else if (tok1->str() == "{")
-            {
-                if (tok1->previous() && tok1->previous()->isName())
-                {
-                    while (0 != (tok1 = tok1 ? tok1->previous() : 0))
-                    {
-                        if (!tok1->isName() && tok1->str() != ":" && tok1->str() != ",")
-                            break;
-                        if (tok1->str() == "class")
-                        {
-                            reallocError(tok->tokAt(2), tok->str());
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-}
 
 
 void CheckExceptionSafety::deallocThrow()
 {
+    // Deallocate a global/member pointer and then throw exception
+    // the pointer will be a dead pointer
     for (const Token *tok = _tokenizer->tokens(); tok; tok = tok->next())
     {
+        // only looking for delete now
         if (tok->str() != "delete")
             continue;
 
@@ -308,10 +102,11 @@ void CheckExceptionSafety::deallocThrow()
 
         // is this variable a global variable?
         {
+            // TODO: Isn't it better to use symbol database instead?
             bool globalVar = false;
             for (const Token *tok2 = _tokenizer->tokens(); tok2; tok2 = tok2->next())
             {
-                if (tok->varId() == varid)
+                if (tok2->varId() == varid)
                 {
                     globalVar = true;
                     break;
@@ -333,13 +128,19 @@ void CheckExceptionSafety::deallocThrow()
                         break;
                 }
             }
+
+            // Not a global variable.. skip checking this var.
             if (!globalVar)
                 continue;
         }
 
-        // is there a throw after the deallocation?
+        // indentlevel..
         unsigned int indentlevel = 0;
+
+        // Token where throw occurs
         const Token *ThrowToken = 0;
+
+        // is there a throw after the deallocation?
         for (const Token *tok2 = tok; tok2; tok2 = tok2->next())
         {
             if (tok2->str() == "{")
@@ -354,6 +155,8 @@ void CheckExceptionSafety::deallocThrow()
             if (tok2->str() == "throw")
                 ThrowToken = tok2;
 
+            // if the variable is not assigned after the throw then it
+            // is assumed that it is not the intention that it is a dead pointer.
             else if (Token::Match(tok2, "%varid% =", varid))
             {
                 if (ThrowToken)
@@ -364,4 +167,32 @@ void CheckExceptionSafety::deallocThrow()
     }
 }
 
+//---------------------------------------------------------------------------
+//      catch(const exception & err)
+//      {
+//         throw err;            // <- should be just "throw;"
+//      }
+//---------------------------------------------------------------------------
+void CheckExceptionSafety::checkRethrowCopy()
+{
+    if (!_settings->_checkCodingStyle)
+        return;
+    const char catchPattern[] = "catch ( const| %type% &|*| %var% ) { %any%";
+
+    const Token *tok = Token::findmatch(_tokenizer->tokens(), catchPattern);
+    while (tok)
+    {
+        const Token *startBlockTok = tok->next()->link()->next();
+        const Token *endBlockTok = startBlockTok->link();
+        const unsigned int varid = startBlockTok->tokAt(-2)->varId();
+
+        const Token* rethrowTok = Token::findmatch(startBlockTok, "throw %varid%", endBlockTok, varid);
+        if (rethrowTok)
+        {
+            rethrowCopyError(rethrowTok, startBlockTok->tokAt(-2)->str());
+        }
+
+        tok = Token::findmatch(endBlockTok->next(), catchPattern);
+    }
+}
 

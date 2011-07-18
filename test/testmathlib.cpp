@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,25 +59,27 @@ private:
         ASSERT_EQUALS("0"  , MathLib::subtract("0", "0."));
 
         // multiply
-        ASSERT_EQUALS("-0.003", MathLib::multiply("-1e-3", "3"));
-        ASSERT_EQUALS("-11.96", MathLib::multiply("-2.3", "5.2"));
-        ASSERT_EQUALS("3000"  , MathLib::multiply("1E3", "3"));
-        ASSERT_EQUALS("3000"  , MathLib::multiply("1E+3", "3"));
-        ASSERT_EQUALS("3000"  , MathLib::multiply("1.0E3", "3"));
-        ASSERT_EQUALS("-3000" , MathLib::multiply("-1.0E3", "3"));
-        ASSERT_EQUALS("-3000" , MathLib::multiply("-1.0E+3", "3"));
-        ASSERT_EQUALS("0" 	  , MathLib::multiply("-1.0E+3", "0"));
-        ASSERT_EQUALS("0" 	  , MathLib::multiply("+1.0E+3", "0"));
+        ASSERT_EQUALS("-0.003"          , MathLib::multiply("-1e-3", "3"));
+        ASSERT_EQUALS("-11.96"          , MathLib::multiply("-2.3", "5.2"));
+        ASSERT_EQUALS("3000"            , MathLib::multiply("1E3", "3"));
+        ASSERT_EQUALS("3000"            , MathLib::multiply("1E+3", "3"));
+        ASSERT_EQUALS("3000"            , MathLib::multiply("1.0E3", "3"));
+        ASSERT_EQUALS("-3000"           , MathLib::multiply("-1.0E3", "3"));
+        ASSERT_EQUALS("-3000"           , MathLib::multiply("-1.0E+3", "3"));
+        ASSERT_EQUALS("0"               , MathLib::multiply("-1.0E+3", "0"));
+        ASSERT_EQUALS("0"               , MathLib::multiply("+1.0E+3", "0"));
+        ASSERT_EQUALS("2147483648"      , MathLib::multiply("2","1073741824"));
+        ASSERT_EQUALS("536870912"       , MathLib::multiply("512","1048576"));
 
         // divide
-        ASSERT_EQUALS("1"	, MathLib::divide("1", "1"));
-        ASSERT_EQUALS("0"	, MathLib::divide("0", "1"));
-        ASSERT_EQUALS("5"	, MathLib::divide("-10", "-2"));
+        ASSERT_EQUALS("1"   , MathLib::divide("1", "1"));
+        ASSERT_EQUALS("0"   , MathLib::divide("0", "1"));
+        ASSERT_EQUALS("5"   , MathLib::divide("-10", "-2"));
         ASSERT_EQUALS("-2.5", MathLib::divide("-10.", "4"));
         ASSERT_EQUALS("2.5" , MathLib::divide("-10.", "-4"));
-        ASSERT_EQUALS("5"	, MathLib::divide("25.5", "5.1"));
-        ASSERT_EQUALS("7"	, MathLib::divide("21.", "3"));
-        ASSERT_EQUALS("1"	, MathLib::divide("3", "2"));
+        ASSERT_EQUALS("5"   , MathLib::divide("25.5", "5.1"));
+        ASSERT_EQUALS("7"   , MathLib::divide("21.", "3"));
+        ASSERT_EQUALS("1"   , MathLib::divide("3", "2"));
 
     }
 
@@ -119,30 +121,30 @@ private:
         // -----------------
         // to double number:
         // -----------------
-        ASSERT_EQUALS(10.0	, MathLib::toDoubleNumber("10"));
-        ASSERT_EQUALS(1000.0, MathLib::toDoubleNumber("10E+2"));
-        ASSERT_EQUALS(100.0 , MathLib::toDoubleNumber("1.0E+2"));
-        ASSERT_EQUALS(-100.0, MathLib::toDoubleNumber("-1.0E+2"));
-        ASSERT_EQUALS(-1e+10, MathLib::toDoubleNumber("-1.0E+10"));
-        ASSERT_EQUALS(100.0 , MathLib::toDoubleNumber("+1.0E+2"));
-        ASSERT_EQUALS(1e+10 , MathLib::toDoubleNumber("+1.0E+10"));
-        ASSERT_EQUALS(100.0 , MathLib::toDoubleNumber("1.0E+2"));
-        ASSERT_EQUALS(1e+10 , MathLib::toDoubleNumber("1.0E+10"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("0E+0"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("0E-0"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("0E+00"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("0E-00"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("-0E+00"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("+0E-00"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("0"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("0."));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("0.0"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("-0"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("+0"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("-0."));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("+0."));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("-0.0"));
-        ASSERT_EQUALS(0.0   , MathLib::toDoubleNumber("+0.0"));
+        ASSERT_EQUALS_DOUBLE(10.0	, MathLib::toDoubleNumber("10"));
+        ASSERT_EQUALS_DOUBLE(1000.0, MathLib::toDoubleNumber("10E+2"));
+        ASSERT_EQUALS_DOUBLE(100.0 , MathLib::toDoubleNumber("1.0E+2"));
+        ASSERT_EQUALS_DOUBLE(-100.0, MathLib::toDoubleNumber("-1.0E+2"));
+        ASSERT_EQUALS_DOUBLE(-1e+10, MathLib::toDoubleNumber("-1.0E+10"));
+        ASSERT_EQUALS_DOUBLE(100.0 , MathLib::toDoubleNumber("+1.0E+2"));
+        ASSERT_EQUALS_DOUBLE(1e+10 , MathLib::toDoubleNumber("+1.0E+10"));
+        ASSERT_EQUALS_DOUBLE(100.0 , MathLib::toDoubleNumber("1.0E+2"));
+        ASSERT_EQUALS_DOUBLE(1e+10 , MathLib::toDoubleNumber("1.0E+10"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("0E+0"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("0E-0"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("0E+00"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("0E-00"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("-0E+00"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("+0E-00"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("0"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("0."));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("0.0"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("-0"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("+0"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("-0."));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("+0."));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("-0.0"));
+        ASSERT_EQUALS_DOUBLE(0.0   , MathLib::toDoubleNumber("+0.0"));
 
     }
 
@@ -195,19 +197,19 @@ private:
         ASSERT_EQUALS(false, MathLib::isInt("-1.E+1"));
         ASSERT_EQUALS(false, MathLib::isInt("+1.E-1"));
         ASSERT_EQUALS(false, MathLib::isInt(" 1.0E+1"));
-        // with whitspaces in front
+        // with whitespace in front
         ASSERT_EQUALS(false, MathLib::isInt(" 1.0E-1"));
         ASSERT_EQUALS(false, MathLib::isInt(" -1.0E+1"));
         ASSERT_EQUALS(false, MathLib::isInt(" +1.0E-1"));
         ASSERT_EQUALS(false, MathLib::isInt(" -1.E+1"));
         ASSERT_EQUALS(false, MathLib::isInt(" +1.E-1"));
-        // with whitspaces in front and end
+        // with whitespace in front and end
         ASSERT_EQUALS(false, MathLib::isInt(" 1.0E-1  "));
         ASSERT_EQUALS(false, MathLib::isInt(" -1.0E+1  "));
         ASSERT_EQUALS(false, MathLib::isInt(" +1.0E-1  "));
         ASSERT_EQUALS(false, MathLib::isInt(" -1.E+1  "));
         ASSERT_EQUALS(false, MathLib::isInt(" +1.E-1  "));
-        // with whitspaces in front and end
+        // with whitespace in front and end
         ASSERT_EQUALS(false, MathLib::isInt("1.0E-1  "));
         ASSERT_EQUALS(false, MathLib::isInt("-1.0E+1  "));
         ASSERT_EQUALS(false, MathLib::isInt("+1.0E-1  "));
@@ -260,6 +262,7 @@ private:
         ASSERT_EQUALS(false , MathLib::isFloat("+1E+10000"));
         ASSERT_EQUALS(false , MathLib::isFloat("-1E+1"));
         ASSERT_EQUALS(false , MathLib::isFloat("-1E+10000"));
+        ASSERT_EQUALS(true  , MathLib::isFloat(".1250E+04"));
         ASSERT_EQUALS(true  , MathLib::isFloat("-1E-1"));
         ASSERT_EQUALS(true  , MathLib::isFloat("-1E-10000"));
 

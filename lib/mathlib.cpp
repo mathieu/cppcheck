@@ -1,6 +1,6 @@
 /*
  * Cppcheck - A tool for static C/C++ code analysis
- * Copyright (C) 2007-2010 Daniel Marjamäki and Cppcheck team.
+ * Copyright (C) 2007-2011 Daniel Marjamäki and Cppcheck team.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 
 #include "mathlib.h"
-
+#include "tokenize.h"
 
 #include <fstream>
 #include <string>
@@ -30,23 +30,37 @@
 #include <cmath>
 #include <cctype>
 
-long MathLib::toLongNumber(const std::string &str)
+MathLib::bigint MathLib::toLongNumber(const std::string &str)
 {
+    // hexadecimal numbers:
     if (str.compare(0, 2, "0x") == 0
         || str.compare(0, 3, "+0x") == 0
         || str.compare(0, 3, "-0x") == 0)
     {
-        return std::strtoul(str.c_str(), '\0', 16);
+        bigint ret = 0;
+        std::istringstream istr(str.substr((str[0]=='0') ? 2U : 3U));
+        istr >> std::hex >> ret;
+        return (str[0]=='-') ? -ret : ret;
     }
+
+    // octal numbers:
     if (str.compare(0, 1, "0") == 0
         ||  str.compare(0, 2, "+0") == 0
         ||  str.compare(0, 2, "-0") == 0)
     {
-        return std::strtoul(str.c_str(), '\0', 8);
+        bigint ret = 0;
+        std::istringstream istr(str.substr((str[0]=='0') ? 1U : 2U));
+        istr >> std::oct >> ret;
+        return (str[0]=='-') ? -ret : ret;
     }
-    return (str.find("E", 0) != std::string::npos || str.find("e", 0) != std::string::npos)
-           ? static_cast<long>(std::atof(str.c_str()))
-           : std::atol(str.c_str());
+
+    if (str.find_first_of("eE") != std::string::npos)
+        return static_cast<bigint>(std::atof(str.c_str()));
+
+    bigint ret = 0;
+    std::istringstream istr(str);
+    istr >> ret;
+    return ret;
 }
 
 double MathLib::toDoubleNumber(const std::string &str)
@@ -63,20 +77,6 @@ double MathLib::toDoubleNumber(const std::string &str)
     double ret;
     istr >> ret;
     return ret;
-}
-
-template <typename T>
-std::string MathLib::toString(T d)
-{
-    std::ostringstream result;
-    result << d;
-    std::string strResult(result.str());
-    if (strResult == "-0"
-        || strResult == "+0"
-        || strResult == "-0."
-        || strResult == "+0.")
-        return std::string("0");
-    return result.str();
 }
 
 bool MathLib::isFloat(const std::string &s)
@@ -194,7 +194,7 @@ bool MathLib::isInt(const std::string & s)
         // unsigned or long
         while (std::tolower(s[n]) == 'u' || std::tolower(s[n]) == 'l') ++n;
 
-        if(bStartsWithDigit==false)
+        if (bStartsWithDigit==false)
             return false;
     }
     // eat up whitespace
@@ -213,7 +213,7 @@ std::string MathLib::add(const std::string & first, const std::string & second)
 {
     if (MathLib::isInt(first) && MathLib::isInt(second))
     {
-        return toString<long>(toLongNumber(first) + toLongNumber(second));
+        return toString<bigint>(toLongNumber(first) + toLongNumber(second));
     }
     return toString<double>(toDoubleNumber(first) + toDoubleNumber(second));
 }
@@ -222,7 +222,7 @@ std::string MathLib::subtract(const std::string &first, const std::string &secon
 {
     if (MathLib::isInt(first) && MathLib::isInt(second))
     {
-        return toString<long>(toLongNumber(first) - toLongNumber(second));
+        return toString<bigint>(toLongNumber(first) - toLongNumber(second));
     }
     return toString<double>(toDoubleNumber(first) - toDoubleNumber(second));
 }
@@ -231,7 +231,7 @@ std::string MathLib::divide(const std::string &first, const std::string &second)
 {
     if (MathLib::isInt(first) && MathLib::isInt(second))
     {
-        return toString<long>(toLongNumber(first) / toLongNumber(second));
+        return toString<bigint>(toLongNumber(first) / toLongNumber(second));
     }
     return toString<double>(toDoubleNumber(first) / toDoubleNumber(second));
 }
@@ -240,12 +240,12 @@ std::string MathLib::multiply(const std::string &first, const std::string &secon
 {
     if (MathLib::isInt(first) && MathLib::isInt(second))
     {
-        return toString<long>(toLongNumber(first) * toLongNumber(second));
+        return toString<bigint>(toLongNumber(first) * toLongNumber(second));
     }
     return toString<double>(toDoubleNumber(first) * toDoubleNumber(second));
 }
 
-std::string MathLib::calculate(const std::string &first, const std::string &second, char action)
+std::string MathLib::calculate(const std::string &first, const std::string &second, char action, const Tokenizer *tokenizer)
 {
     std::string result("0");
 
@@ -268,11 +268,7 @@ std::string MathLib::calculate(const std::string &first, const std::string &seco
         break;
 
     default:
-        std::cerr << "##### If you see this, there is a bug: "
-                  << "MathLib::calculate() was called with unknown action '"
-                  << action
-                  << "' #####"
-                  << std::endl;
+        tokenizer->cppcheckError(0);
         break;
     }
 
@@ -301,9 +297,34 @@ std::string MathLib::abs(const std::string &tok)
     return toString<double>(std::abs(toDoubleNumber(tok)));
 }
 
+bool MathLib::isEqual(const std::string &first, const std::string &second)
+{
+    return toDoubleNumber(first) == toDoubleNumber(second);
+}
+
+bool MathLib::isNotEqual(const std::string &first, const std::string &second)
+{
+    return toDoubleNumber(first) != toDoubleNumber(second);
+}
+
 bool MathLib::isGreater(const std::string &first, const std::string &second)
 {
     return toDoubleNumber(first) > toDoubleNumber(second);
+}
+
+bool MathLib::isGreaterEqual(const std::string &first, const std::string &second)
+{
+    return toDoubleNumber(first) >= toDoubleNumber(second);
+}
+
+bool MathLib::isLess(const std::string &first, const std::string &second)
+{
+    return toDoubleNumber(first) < toDoubleNumber(second);
+}
+
+bool MathLib::isLessEqual(const std::string &first, const std::string &second)
+{
+    return toDoubleNumber(first) <= toDoubleNumber(second);
 }
 
 bool MathLib::isNullValue(const std::string &str)
